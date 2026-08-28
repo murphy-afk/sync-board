@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -8,12 +8,12 @@ import { MdOutlineFreeBreakfast } from "react-icons/md";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const statusIcons = {
-  'Free to Call': <MdOutlineFreeBreakfast className="text-emerald-700/70" />,
-  'At Work': <FiBriefcase className="text-amber-700/70" />,
-  'Studying': <FiBookOpen className="text-rose-700/70" />,
-  'Sleeping': <FiMoon className="text-indigo-700/70" />,
-};
+const statusOptions = [
+  { label: 'Free to Call', icon: <MdOutlineFreeBreakfast className="text-emerald-700/70 text-lg" /> },
+  { label: 'At Work', icon: <FiBriefcase className="text-amber-700/70 text-lg" /> },
+  { label: 'Studying', icon: <FiBookOpen className="text-rose-700/70 text-lg" /> },
+  { label: 'Sleeping', icon: <FiMoon className="text-indigo-700/70 text-lg" /> },
+];
 
 export default function Dashboard() {
   const [myTimezone] = useState(dayjs.tz.guess());
@@ -21,14 +21,30 @@ export default function Dashboard() {
   const [myStatus, setMyStatus] = useState('Free to Call');
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const TimeCard = ({ label, timezone, time, status, isUser, onStatusChange }) => (
-    <div className={`bg-[#FAF7F2] p-8 rounded-4xl border ${isUser ? 'border-emerald-200/50 shadow-emerald-900/5' : 'border-orange-200/50 shadow-orange-900/5'} shadow-md flex flex-col justify-between transition-all duration-300`}>
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
+  const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
+
+  const TimeCard = ({ label, timezone, time, currentStatus, isUser, onSelectStatus }) => (
+    <div className={`bg-[#FAF7F2] p-8 rounded-4xl border ${isUser ? 'border-emerald-200/50 shadow-emerald-900/5' : 'border-orange-200/50 shadow-orange-900/5'} shadow-md flex flex-col justify-between transition-all duration-300 relative`}>
       <div>
         <div className="flex items-center justify-between mb-6">
           <span className={`text-xs font-medium uppercase tracking-widest px-3.5 py-1.5 rounded-full ${isUser ? 'bg-emerald-100/60 text-emerald-800' : 'bg-orange-100/60 text-orange-800'}`}>
@@ -58,28 +74,40 @@ export default function Dashboard() {
 
       <div className="mt-8 pt-6 border-t border-stone-200/60">
         <label className="text-xs font-medium text-stone-600 uppercase tracking-wider block mb-3">Current Routine</label>
+        
         {isUser ? (
-          <div className="relative">
-            <select
-              value={myStatus}
-              onChange={(e) => onStatusChange(e.target.value)}
-              className="appearance-none bg-[#F3EDE2]/60 border border-stone-200 rounded-2xl pl-12 pr-10 py-3.5 w-full text-base font-normal text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-200/50 focus:border-emerald-300 transition cursor-pointer">
-              <option value="Free to Call">Free to Call</option>
-              <option value="At Work">At Work</option>
-              <option value="Studying">Studying</option>
-              <option value="Sleeping">Sleeping</option>
-            </select>
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">
-              {statusIcons[myStatus]}
-            </div>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none text-xs">▼</div>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full bg-[#F3EDE2]/60 border border-stone-200 hover:border-stone-300 rounded-2xl px-4 py-3.5 flex items-center justify-between text-base font-normal text-stone-700 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-200/50">
+              <div className="flex items-center gap-3">
+                {currentStatus.icon}
+                <span>{currentStatus.label}</span>
+              </div>
+              <span className={`text-stone-400 text-xs transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute left-0 right-0 mt-2 bg-[#FAF7F2] border border-stone-200 rounded-2xl shadow-xl overflow-hidden z-20 py-2">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.label}
+                    onClick={() => {
+                      onSelectStatus(option.label);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-3 flex items-center gap-3 text-stone-700 hover:bg-[#F3EDE2]/80 transition text-left text-base">
+                    {option.icon}
+                    <span>{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-[#F3EDE2]/60 border border-stone-200 rounded-2xl px-4 py-3.5 flex items-center gap-3 text-base font-normal text-stone-700">
-            <div className="text-lg">
-              {statusIcons[partnerStatus]}
-            </div>
-            {partnerStatus}
+            {currentStatus.icon}
+            <span>{currentStatus.label}</span>
           </div>
         )}
       </div>
@@ -100,14 +128,14 @@ export default function Dashboard() {
           label="You"
           timezone={myTimezone}
           time={currentTime}
-          status={myStatus}
+          currentStatus={currentStatusObj}
           isUser={true}
-          onStatusChange={setMyStatus}/>
+          onSelectStatus={setMyStatus}/>
         <TimeCard
           label="Your Partner"
           timezone={partnerTimezone}
           time={currentTime}
-          status={partnerStatus}
+          currentStatus={partnerStatusObj}
           isUser={false}/>
       </div>
 
