@@ -28,7 +28,7 @@ export default function Dashboard() {
   }, []);
 
   const TimeCard = ({ label, timezone, time, status, isUser, onStatusChange }) => (
-    <div className={`bg-[#FAF7F2] p-8 rounded-[2rem] border ${isUser ? 'border-emerald-200/50 shadow-emerald-900/5' : 'border-orange-200/50 shadow-orange-900/5'} shadow-md flex flex-col justify-between transition-all duration-300`}>
+    <div className={`bg-[#FAF7F2] p-8 rounded-4xl border ${isUser ? 'border-emerald-200/50 shadow-emerald-900/5' : 'border-orange-200/50 shadow-orange-900/5'} shadow-md flex flex-col justify-between transition-all duration-300`}>
       <div>
         <div className="flex items-center justify-between mb-6">
           <span className={`text-xs font-medium uppercase tracking-widest px-3.5 py-1.5 rounded-full ${isUser ? 'bg-emerald-100/60 text-emerald-800' : 'bg-orange-100/60 text-orange-800'}`}>
@@ -93,9 +93,6 @@ export default function Dashboard() {
           <FiHeart className="text-lg fill-current" />
         </div>
         <h1 className="text-4xl md:text-5xl font-light tracking-tight text-stone-800">Sync Board</h1>
-        <p className="text-stone-500 text-base md:text-lg mt-3 font-normal leading-relaxed">
-          A quiet little corner to keep track of each other's day, no matter the distance.
-        </p>
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
