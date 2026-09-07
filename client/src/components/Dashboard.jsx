@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { FiClock, FiCalendar, FiBriefcase, FiBookOpen, FiMoon, FiSun, FiHeart } from 'react-icons/fi';
+import { FiClock, FiCalendar, FiBriefcase, FiBookOpen, FiMoon, FiSun, FiHeart, FiGrid, FiCompass } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from "react-icons/md";
+import PixelCanvas from './PixelCanvas';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('board'); // 'board' or 'canvas'
 
   const dropdownRef = useRef(null);
 
@@ -79,7 +81,8 @@ export default function Dashboard() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full bg-[#F3EDE2]/60 border border-stone-200 hover:border-stone-300 rounded-2xl px-4 py-3.5 flex items-center justify-between text-base font-normal text-stone-700 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-200/50">
+              className="w-full bg-[#F3EDE2]/60 border border-stone-200 hover:border-stone-300 rounded-2xl px-4 py-3.5 flex items-center justify-between text-base font-normal text-stone-700 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-200/50"
+            >
               <div className="flex items-center gap-3">
                 {currentStatus.icon}
                 <span>{currentStatus.label}</span>
@@ -116,28 +119,46 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#fdc3ee] text-stone-700 p-8 md:p-16 font-sans">
-      <header className="mb-16 text-center max-w-xl mx-auto">
+      <header className="mb-12 text-center max-w-xl mx-auto">
         <div className="inline-flex items-center justify-center p-3 bg-rose-100/60 text-rose-700/80 rounded-full mb-4 shadow-sm">
           <FiHeart className="text-lg fill-current" />
         </div>
         <h1 className="text-4xl md:text-5xl font-light tracking-tight text-stone-800">Sync Board</h1>
+        
+        {/* Navigation Tabs */}
+        <div className="flex justify-center gap-3 mt-6">
+          <button
+            onClick={() => setActiveTab('board')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'board' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
+            <FiCompass /> Time Board
+          </button>
+          <button
+            onClick={() => setActiveTab('canvas')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'canvas' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
+            <FiGrid /> Pixel Canvas
+          </button>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
-        <TimeCard
-          label="You"
-          timezone={myTimezone}
-          time={currentTime}
-          currentStatus={currentStatusObj}
-          isUser={true}
-          onSelectStatus={setMyStatus}/>
-        <TimeCard
-          label="Your Partner"
-          timezone={partnerTimezone}
-          time={currentTime}
-          currentStatus={partnerStatusObj}
-          isUser={false}/>
-      </div>
+      {activeTab === 'board' ? (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
+          <TimeCard
+            label="You"
+            timezone={myTimezone}
+            time={currentTime}
+            currentStatus={currentStatusObj}
+            isUser={true}
+            onSelectStatus={setMyStatus}/>
+          <TimeCard
+            label="Your Partner"
+            timezone={partnerTimezone}
+            time={currentTime}
+            currentStatus={partnerStatusObj}
+            isUser={false}/>
+        </div>
+      ) : (
+        <PixelCanvas />
+      )}
 
       <footer className="mt-24 text-center text-stone-400 text-xs tracking-wide">
         Built with love :3
