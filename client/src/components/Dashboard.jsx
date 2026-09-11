@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { FiClock, FiCalendar, FiBriefcase, FiBookOpen, FiMoon, FiSun, FiHeart, FiGrid, FiCompass } from 'react-icons/fi';
+import { FiClock, FiCalendar, FiBriefcase, FiBookOpen, FiMoon, FiSun, FiHeart, FiGrid, FiCompass, FiMessageSquare } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from "react-icons/md";
 import PixelCanvas from './PixelCanvas';
+import MessageBoard from './MessageBoard';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -23,7 +24,7 @@ export default function Dashboard() {
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('board'); // 'board' or 'canvas'
+  const [activeTab, setActiveTab] = useState('board'); // 'board', 'canvas', or 'notes'
 
   const dropdownRef = useRef(null);
 
@@ -76,7 +77,7 @@ export default function Dashboard() {
 
       <div className="mt-8 pt-6 border-t border-stone-200/60">
         <label className="text-xs font-medium text-stone-600 uppercase tracking-wider block mb-3">Current Routine</label>
-        
+
         {isUser ? (
           <div className="relative" ref={dropdownRef}>
             <button
@@ -124,7 +125,7 @@ export default function Dashboard() {
           <FiHeart className="text-lg fill-current" />
         </div>
         <h1 className="text-4xl md:text-5xl font-light tracking-tight text-stone-800">Sync Board</h1>
-        
+
         {/* Navigation Tabs */}
         <div className="flex justify-center gap-3 mt-6">
           <button
@@ -137,10 +138,15 @@ export default function Dashboard() {
             className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'canvas' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
             <FiGrid /> Pixel Canvas
           </button>
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'notes' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
+            <FiMessageSquare /> Daily Notes
+          </button>
         </div>
       </header>
 
-      {activeTab === 'board' ? (
+      {activeTab === 'board' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
           <TimeCard
             label="You"
@@ -148,17 +154,19 @@ export default function Dashboard() {
             time={currentTime}
             currentStatus={currentStatusObj}
             isUser={true}
-            onSelectStatus={setMyStatus}/>
+            onSelectStatus={setMyStatus} />
           <TimeCard
             label="Your Partner"
             timezone={partnerTimezone}
             time={currentTime}
             currentStatus={partnerStatusObj}
-            isUser={false}/>
+            isUser={false} />
         </div>
-      ) : (
-        <PixelCanvas />
       )}
+
+      {activeTab === 'canvas' && <PixelCanvas />}
+
+      {activeTab === 'notes' && <MessageBoard />}
 
       <footer className="mt-24 text-center text-stone-400 text-xs tracking-wide">
         Built with love :3
