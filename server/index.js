@@ -268,3 +268,37 @@ app.put('/api/users/:userId', async (req, res) => {
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });
+
+// Get routines for user
+app.get('/api/routines/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM routines WHERE user_id = ?', [req.params.userId]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch routines' });
+  }
+});
+
+// Save a new routine rule
+app.post('/api/routines', async (req, res) => {
+  try {
+    const { userId, statusLabel, startTime, endTime, daysOfWeek } = req.body;
+    const [result] = await pool.query(
+      'INSERT INTO routines (user_id, status_label, start_time, end_time, days_of_week) VALUES (?, ?, ?, ?, ?)',
+      [userId, statusLabel, startTime, endTime, JSON.stringify(daysOfWeek)]
+    );
+    res.status(201).json({ id: result.insertId, success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create routine' });
+  }
+});
+
+// Toggle or delete a routine
+app.delete('/api/routines/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM routines WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete routine' });
+  }
+});
