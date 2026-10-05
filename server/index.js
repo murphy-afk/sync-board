@@ -27,12 +27,12 @@ app.listen(PORT, () => {
 
 // DOODLES
 
-// Get all saved doodles 
-app.get('/api/doodles/:coupleId', async (req, res) => {
+// Get doodles for a specific board
+app.get('/api/doodles/:boardId', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM doodles WHERE couple_id = ? ORDER BY created_at DESC',
-            [req.params.coupleId]
+            'SELECT * FROM doodles WHERE board_id = ? ORDER BY created_at DESC',
+            [req.params.boardId]
         );
         res.json(rows);
     } catch (err) {
@@ -44,17 +44,23 @@ app.get('/api/doodles/:coupleId', async (req, res) => {
 // Save a new doodle
 app.post('/api/doodles', async (req, res) => {
     try {
-        const { coupleId = 1, gridData } = req.body;
+        const { boardId, grid_data, title, author } = req.body;
+        if (!boardId || !grid_data) {
+            return res.status(400).json({ error: 'Board ID and grid data are required' });
+        }
+        
         const [result] = await pool.query(
-            'INSERT INTO doodles (couple_id, grid_data) VALUES (?, ?)',
-            [coupleId, JSON.stringify(gridData)]
+            'INSERT INTO doodles (board_id, grid_data, title, author) VALUES (?, ?, ?, ?)',
+            [boardId, JSON.stringify(grid_data), title || 'Untitled Doodle', author || 'Anonymous']
         );
+        
         res.status(201).json({ id: result.insertId, success: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to save doodle' });
     }
 });
+
 // Delete a doodle
 app.delete('/api/doodles/:id', async (req, res) => {
     try {
