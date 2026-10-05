@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSettings, FiLogOut, FiUserX, FiLink, FiLayout, FiUser } from 'react-icons/fi';
+import { FiSettings, FiLogOut, FiUserX, FiLink, FiLayout, FiUser, FiClock } from 'react-icons/fi';
 import ConfirmModal from './ConfirmModal';
 
 const THEMES = [
@@ -17,7 +17,8 @@ export default function SettingsDropdown({
   onLogout, 
   onUnsync, 
   onDeleteAccount,
-  onOpenProfile 
+  onOpenProfile,
+  onOpenRoutines 
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
@@ -81,11 +82,16 @@ export default function SettingsDropdown({
               )}
             </div>
 
-            <div className="py-1 border-b border-stone-200/60">
+            <div className="py-1 border-b border-stone-200/60 space-y-0.5">
               <button
                 onClick={() => { setIsOpen(false); onOpenProfile(); }}
                 className="w-full px-5 py-2.5 flex items-center gap-2.5 text-stone-600 hover:bg-[#F3EDE2] transition text-xs font-medium cursor-pointer">
                 <FiUser className="text-sm" /> Edit Profile & Timezone
+              </button>
+              <button
+                onClick={() => { setIsOpen(false); onOpenRoutines(); }}
+                className="w-full px-5 py-2.5 flex items-center gap-2.5 text-stone-600 hover:bg-[#F3EDE2] transition text-xs font-medium cursor-pointer">
+                <FiClock className="text-sm" /> Manage Routines
               </button>
             </div>
 
@@ -133,8 +139,7 @@ export default function SettingsDropdown({
         confirmText={modalConfig?.confirmText}
         confirmColor={modalConfig?.confirmColor}
         onConfirm={modalConfig?.action}
-        onClose={() => setModalConfig(null)}
-      />
+        onClose={() => setModalConfig(null)}/>
     </>
   );
 }
