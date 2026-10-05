@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { FiSend, FiTrash2, FiMessageSquare, FiAlertTriangle } from 'react-icons/fi';
 
-const COUPLE_ID = 1;
-
-export default function MessageBoard() {
+export default function MessageBoard({ boardId }) {
   const [notes, setNotes] = useState([]);
   const [author, setAuthor] = useState('');
   const [content, setContent] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (boardId) {
+      fetchNotes();
+    }
+  }, [boardId]);
 
   const fetchNotes = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/notes/${COUPLE_ID}`);
+      const res = await fetch(`http://localhost:5000/api/notes/${boardId}`);
       const data = await res.json();
       const formatted = data.map(item => ({
         id: item.id,
@@ -31,13 +31,13 @@ export default function MessageBoard() {
 
   const handlePostNote = async (e) => {
     e.preventDefault();
-    if (!author.trim() || !content.trim()) return;
+    if (!boardId || !author.trim() || !content.trim()) return;
 
     try {
       const response = await fetch('http://localhost:5000/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coupleId: COUPLE_ID, author, content })
+        body: JSON.stringify({ boardId, author, content })
       });
 
       if (response.ok) {
@@ -80,8 +80,7 @@ export default function MessageBoard() {
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             className="w-1/3 px-4 py-2.5 rounded-xl bg-[#FAF7F2] border border-stone-200/80 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
-            required
-          />
+            required/>
         </div>
         <textarea
           placeholder="Write a sweet note..."
@@ -89,8 +88,7 @@ export default function MessageBoard() {
           onChange={(e) => setContent(e.target.value)}
           rows="3"
           className="w-full px-4 py-3 rounded-xl bg-[#FAF7F2] border border-stone-200/80 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400 resize-none"
-          required
-        />
+          required/>
         <div className="flex justify-end">
           <button type="submit" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium transition cursor-pointer">
             <FiSend /> Post Note
