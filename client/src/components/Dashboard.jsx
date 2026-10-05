@@ -6,6 +6,7 @@ import { FiClock, FiCalendar, FiBriefcase, FiBookOpen, FiMoon, FiSun, FiHeart, F
 import { MdOutlineFreeBreakfast } from "react-icons/md";
 import PixelCanvas from './PixelCanvas';
 import MessageBoard from './MessageBoard';
+import SettingsDropdown from './SettingsDropdown';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -24,6 +25,7 @@ export default function Dashboard({ user, onLogout }) {
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('bg-[#fdc3ee]');
   const [activeTab, setActiveTab] = useState('board');
   const [memberCount, setMemberCount] = useState(1);
 
@@ -34,7 +36,6 @@ export default function Dashboard({ user, onLogout }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch board members to see if a partner has joined
   useEffect(() => {
     const fetchMembers = async () => {
       if (!user?.boardId) return;
@@ -50,7 +51,6 @@ export default function Dashboard({ user, onLogout }) {
     };
 
     fetchMembers();
-    // Optional: poll every few seconds so it disappears automatically when they join
     const interval = setInterval(fetchMembers, 5000);
     return () => clearInterval(interval);
   }, [user?.boardId]);
@@ -64,6 +64,16 @@ export default function Dashboard({ user, onLogout }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleUnsyncBoard = async () => {
+    if (!window.confirm('Are you sure you want to unsync from this board?')) return;
+    alert('Unsync functionality ready to connect to backend!');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('WARNING: This will permanently delete your account. Are you sure?')) return;
+    alert('Delete account functionality ready to connect to backend!');
+  };
 
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
@@ -140,22 +150,19 @@ export default function Dashboard({ user, onLogout }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#fdc3ee] text-stone-700 p-8 md:p-16 font-sans">
-      <header className="mb-12 text-center max-w-xl mx-auto">
-        <div className="flex justify-between items-center mb-4 bg-white/60 px-4 py-2 rounded-full border border-stone-200/60 shadow-xs">
-          <span className="text-xs text-stone-600 font-mono">
-            Logged in as <strong className="text-stone-800">{user?.username}</strong>
-            {memberCount < 2 && (
-              <> | Code: <strong className="text-rose-600">{user?.inviteCode || 'N/A'}</strong></>
-            )}
-          </span>
-          <button
-            onClick={onLogout}
-            className="text-xs font-medium text-stone-600 hover:text-stone-900 transition cursor-pointer bg-stone-100 px-3 py-1 rounded-full">
-            Log Out
-          </button>
-        </div>
+    <div className={`min-h-screen ${currentTheme} text-stone-700 p-8 md:p-16 font-sans transition-colors duration-500 relative`}>
 
+      {/* Extracted Settings Component */}
+      <SettingsDropdown
+        user={user}
+        memberCount={memberCount}
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
+        onLogout={onLogout}
+        onUnsync={handleUnsyncBoard}
+        onDeleteAccount={handleDeleteAccount}/>
+
+      <header className="mb-12 text-center max-w-xl mx-auto pt-4">
         <div className="inline-flex items-center justify-center p-3 bg-rose-100/60 text-rose-700/80 rounded-full mb-4 shadow-sm">
           <FiHeart className="text-lg fill-current" />
         </div>
