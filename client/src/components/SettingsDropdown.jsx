@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSettings, FiLogOut, FiUserX, FiLink, FiLayout } from 'react-icons/fi';
+import { FiSettings, FiLogOut, FiUserX, FiLink, FiLayout, FiUser } from 'react-icons/fi';
 import ConfirmModal from './ConfirmModal';
 
 const THEMES = [
@@ -16,7 +16,8 @@ export default function SettingsDropdown({
   setCurrentTheme, 
   onLogout, 
   onUnsync, 
-  onDeleteAccount 
+  onDeleteAccount,
+  onOpenProfile 
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
@@ -67,17 +68,25 @@ export default function SettingsDropdown({
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 bg-white/80 hover:bg-white px-4 py-2.5 rounded-full border border-stone-200/60 shadow-sm transition cursor-pointer text-stone-700 text-sm font-medium">
           <FiSettings className={`transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
-          <span>{user?.username}</span>
+          <span>{user?.nickname || user?.username}</span>
         </button>
 
         {isOpen && (
           <div className="absolute right-0 mt-3 w-64 bg-[#FAF7F2] border border-stone-200 rounded-3xl shadow-2xl overflow-hidden py-3 z-40 animate-fade-in">
             <div className="px-5 py-3 border-b border-stone-200/60">
               <p className="text-xs text-stone-400 font-mono">Logged in as</p>
-              <p className="text-sm font-semibold text-stone-800">{user?.username}</p>
+              <p className="text-sm font-semibold text-stone-800">{user?.nickname || user?.username}</p>
               {memberCount < 2 && (
                 <p className="text-xs text-rose-600 font-mono mt-1">Code: {user?.inviteCode}</p>
               )}
+            </div>
+
+            <div className="py-1 border-b border-stone-200/60">
+              <button
+                onClick={() => { setIsOpen(false); onOpenProfile(); }}
+                className="w-full px-5 py-2.5 flex items-center gap-2.5 text-stone-600 hover:bg-[#F3EDE2] transition text-xs font-medium cursor-pointer">
+                <FiUser className="text-sm" /> Edit Profile & Timezone
+              </button>
             </div>
 
             <div className="px-3 py-2 border-b border-stone-200/60">
@@ -124,7 +133,8 @@ export default function SettingsDropdown({
         confirmText={modalConfig?.confirmText}
         confirmColor={modalConfig?.confirmColor}
         onConfirm={modalConfig?.action}
-        onClose={() => setModalConfig(null)}/>
+        onClose={() => setModalConfig(null)}
+      />
     </>
   );
 }

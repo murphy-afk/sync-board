@@ -226,3 +226,45 @@ app.get('/api/boards/:boardId/members', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch board members' });
   }
 });
+
+// Get user profile info
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT id, username, nickname, timezone, board_id FROM users WHERE id = ?', [req.params.userId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// Update user profile (nickname, timezone)
+app.put('/api/users/:userId', async (req, res) => {
+  try {
+    const { nickname, timezone } = req.body;
+    await pool.query(
+      'UPDATE users SET nickname = ?, timezone = ? WHERE id = ?',
+      [nickname || null, timezone || 'UTC', req.params.userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Update user profile (nickname, timezone)
+app.put('/api/users/:userId', async (req, res) => {
+  try {
+    const { nickname, timezone } = req.body;
+    await pool.query(
+      'UPDATE users SET nickname = ?, timezone = ? WHERE id = ?',
+      [nickname || null, timezone || 'UTC', req.params.userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});

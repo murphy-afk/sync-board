@@ -8,6 +8,7 @@ import PixelCanvas from './PixelCanvas';
 import MessageBoard from './MessageBoard';
 import SettingsDropdown from './SettingsDropdown';
 import TimeCard from './TimeCard';
+import ProfileModal from './ProfileModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -19,15 +20,17 @@ const statusOptions = [
   { label: 'Sleeping', icon: <FiMoon className="text-indigo-700/70 text-lg" /> },
 ];
 
-export default function Dashboard({ user, onLogout }) {
-  const [myTimezone] = useState(dayjs.tz.guess());
-  const [partnerTimezone] = useState('Europe/London');
+export default function Dashboard({ user: initialUser, onLogout }) {
+  const [user, setUser] = useState(initialUser);
+  const [partner, setPartner] = useState(null);
+  
   const [myStatus, setMyStatus] = useState('Free to Call');
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [currentTheme, setCurrentTheme] = useState('bg-[#fdc3ee]');
   const [activeTab, setActiveTab] = useState('board');
   const [memberCount, setMemberCount] = useState(1);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
@@ -42,6 +45,8 @@ export default function Dashboard({ user, onLogout }) {
         const data = await res.json();
         if (Array.isArray(data)) {
           setMemberCount(data.length);
+          const foundPartner = data.find(m => m.id !== user.userId);
+          setPartner(foundPartner || null);
         }
       } catch (err) {
         console.error('Error fetching members:', err);
@@ -51,7 +56,7 @@ export default function Dashboard({ user, onLogout }) {
     fetchMembers();
     const interval = setInterval(fetchMembers, 5000);
     return () => clearInterval(interval);
-  }, [user?.boardId]);
+  }, [user?.boardId, user?.userId]);
 
   const handleUnsyncBoard = async () => {
     if (!window.confirm('Are you sure you want to unsync from this board?')) return;
@@ -66,9 +71,12 @@ export default function Dashboard({ user, onLogout }) {
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
 
+  const myTimezone = user?.timezone || dayjs.tz.guess();
+  const partnerTimezone = partner?.timezone || 'Europe/London';
+
   return (
     <div className={`min-h-screen ${currentTheme} text-stone-700 p-8 md:p-16 font-sans transition-colors duration-500 relative`}>
-
+      
       <SettingsDropdown
         user={user}
         memberCount={memberCount}
@@ -76,7 +84,8 @@ export default function Dashboard({ user, onLogout }) {
         setCurrentTheme={setCurrentTheme}
         onLogout={onLogout}
         onUnsync={handleUnsyncBoard}
-        onDeleteAccount={handleDeleteAccount} />
+        onDeleteAccount={handleDeleteAccount}
+        onOpenProfile={() => setIsProfileOpen(true)}/>
 
       <header className="mb-12 text-center max-w-xl mx-auto pt-4">
         <div className="inline-flex items-center justify-center p-3 bg-rose-100/60 text-rose-700/80 rounded-full mb-4 shadow-sm">
@@ -107,24 +116,30 @@ export default function Dashboard({ user, onLogout }) {
       {activeTab === 'board' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full max-w-6xl mx-auto">
           <TimeCard
-            label="You"
+            label={user?.nickname || user?.username || 'You'}
             timezone={myTimezone}
             time={currentTime}
             currentStatus={currentStatusObj}
             isUser={true}
-            onSelectStatus={setMyStatus} />
+            onSelectStatus={setMyStatus}/>
           <TimeCard
-            label="Your Partner"
+            label={partner?.nickname || partner?.username || 'Your Partner'}
             timezone={partnerTimezone}
             time={currentTime}
             currentStatus={partnerStatusObj}
-            isUser={false} />
+            isUser={false}/>
         </div>
       )}
 
       {activeTab === 'canvas' && <PixelCanvas boardId={user?.boardId} />}
 
-      {activeTab === 'notes' && <MessageBoard boardId={user?.boardId} username={user?.username} />}
+      {activeTab === 'notes' && <MessageBoard boardId={user?.boardId} username={user?.nickname || user?.username} />}
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        user={user}
+        onSave={(updated) => setUser({ ...user, ...updated })}
+        onClose={() => setIsProfileOpen(false)}/>
 
       <footer className="mt-24 text-center text-stone-400 text-xs tracking-wide">
         Built with love :3

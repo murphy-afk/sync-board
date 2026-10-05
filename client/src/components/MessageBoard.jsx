@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { FiSend, FiTrash2, FiMessageSquare, FiAlertTriangle } from 'react-icons/fi';
 
-export default function MessageBoard({ boardId }) {
+export default function MessageBoard({ boardId, username }) {
   const [notes, setNotes] = useState([]);
-  const [author, setAuthor] = useState('');
+  const [author, setAuthor] = useState(username || '');
   const [content, setContent] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  useEffect(() => {
+    if (username) setAuthor(username);
+  }, [username]);
 
   useEffect(() => {
     if (boardId) {
@@ -80,7 +84,7 @@ export default function MessageBoard({ boardId }) {
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             className="w-1/3 px-4 py-2.5 rounded-xl bg-[#FAF7F2] border border-stone-200/80 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
-            required/>
+            required />
         </div>
         <textarea
           placeholder="Write a sweet note..."
@@ -88,7 +92,7 @@ export default function MessageBoard({ boardId }) {
           onChange={(e) => setContent(e.target.value)}
           rows="3"
           className="w-full px-4 py-3 rounded-xl bg-[#FAF7F2] border border-stone-200/80 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400 resize-none"
-          required/>
+          required />
         <div className="flex justify-end">
           <button type="submit" className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium transition cursor-pointer">
             <FiSend /> Post Note
