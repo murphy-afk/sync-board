@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -106,5 +108,118 @@ app.delete('/api/notes/:id', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to delete note' });
+    }
+});
+
+
+// Register a new user and create a new board automatically
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Generate a unique 6-character invite code for the board
+        const inviteCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+
+        // 1. Create a new board
+        const [boardResult] = await pool.query(
+            'INSERT INTO boards (invite_code, board_name) VALUES (?, ?)',
+            [inviteCode, `${username}'s Board`]
+        );
+        const boardId = boardResult.insertId;
+
+        // 2. Create user and link to the board
+        const [userResult] = await pool.query(
+            'INSERT INTO users (username, password_hash, board_id) VALUES (?, ?, ?)',
+            [username, hashedPassword, boardId]
+        );
+
+        res.status(201).json({
+            success: true,
+            userId: userResult.insertId,
+            username,
+            boardId,
+            inviteCode
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Username may already be taken' });
+    }
+});
+
+// Login user
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        const user = rows[0];
+        const match = await bcrypt.compare(password, user.password_hash);
+
+        if (!match) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        // Fetch board info
+        const [boardRows] = await pool.query('SELECT * FROM boards WHERE id = ?', [user.board_id]);
+        const board = boardRows[0];
+
+        res.json({
+            success: true,
+            userId: user.id,
+            username: user.username,
+            boardId: user.board_id,
+            inviteCode: board ? board.invite_code : null
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+// Join an existing board via invite code (Max 2 users check)
+app.post('/api/boards/join', async (req, res) => {
+    try {
+        const { userId, inviteCode } = req.body;
+
+        // Find the board by invite code
+        const [boardRows] = await pool.query('SELECT * FROM boards WHERE invite_code = ?', [inviteCode]);
+        if (boardRows.length === 0) {
+            return res.status(404).json({ error: 'Invalid invite code' });
+        }
+        const board = boardRows[0];
+
+        // Check how many users are currently on this board
+        const [memberRows] = await pool.query('SELECT COUNT(*) as count FROM users WHERE board_id = ?', [board.id]);
+        if (memberRows[0].count >= 2) {
+            return res.status(400).json({ error: 'This board is already full (max 2 people)' });
+        }
+
+        // Assign user to this board
+        await pool.query('UPDATE users SET board_id = ? WHERE id = ?', [board.id, userId]);
+
+        res.json({ success: true, boardId: board.id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to join board' });
+    }
+});
+
+// Get members of a board
+app.get('/api/boards/:boardId/members', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT id, username FROM users WHERE board_id = ?', [req.params.boardId]);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch board members' });
     }
 });
