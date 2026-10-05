@@ -74,12 +74,12 @@ app.delete('/api/doodles/:id', async (req, res) => {
 
 // NOTES
 
-// Get all daily notes
-app.get('/api/notes/:coupleId', async (req, res) => {
+// Get notes for a specific board
+app.get('/api/notes/:boardId', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM notes WHERE couple_id = ? ORDER BY created_at DESC',
-            [req.params.coupleId]
+            'SELECT * FROM notes WHERE board_id = ? ORDER BY created_at DESC',
+            [req.params.boardId]
         );
         res.json(rows);
     } catch (err) {
@@ -91,14 +91,16 @@ app.get('/api/notes/:coupleId', async (req, res) => {
 // Post a new daily note
 app.post('/api/notes', async (req, res) => {
     try {
-        const { coupleId = 1, author, content } = req.body;
-        if (!author || !content) {
-            return res.status(400).json({ error: 'Author and content are required' });
+        const { boardId, author, content } = req.body;
+        if (!boardId || !author || !content) {
+            return res.status(400).json({ error: 'Board ID, author, and content are required' });
         }
+        
         const [result] = await pool.query(
-            'INSERT INTO notes (couple_id, author, content) VALUES (?, ?, ?)',
-            [coupleId, author, content]
+            'INSERT INTO notes (board_id, author, content) VALUES (?, ?, ?)',
+            [boardId, author, content]
         );
+        
         res.status(201).json({ id: result.insertId, success: true });
     } catch (err) {
         console.error(err);
