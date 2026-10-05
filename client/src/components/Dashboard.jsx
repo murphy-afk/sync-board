@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiSmile, FiBriefcase, FiBookOpen, FiMoon } from 'react-icons/fi';
+import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiBriefcase, FiBookOpen, FiMoon } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from "react-icons/md";
 import PixelCanvas from './PixelCanvas';
 import MessageBoard from './MessageBoard';
@@ -24,7 +24,7 @@ const statusOptions = [
 export default function Dashboard({ user: initialUser, onLogout }) {
   const [user, setUser] = useState(initialUser);
   const [partner, setPartner] = useState(null);
-
+  
   const [myStatus, setMyStatus] = useState('Free to Call');
   const [partnerStatus] = useState('Sleeping');
   const [currentTime, setCurrentTime] = useState(dayjs());
@@ -39,6 +39,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch board members / partner info
   useEffect(() => {
     const fetchMembers = async () => {
       if (!user?.boardId) return;
@@ -60,6 +61,51 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     return () => clearInterval(interval);
   }, [user?.boardId, user?.userId]);
 
+  const myTimezone = user?.timezone || dayjs.tz.guess();
+  const partnerTimezone = partner?.timezone || 'Europe/London';
+
+  // Routine Status Checker
+  useEffect(() => {
+    if (!user?.userId) return;
+
+    const checkRoutines = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/routines/${user.userId}`);
+        const routines = await res.json();
+        
+        if (!Array.isArray(routines) || routines.length === 0) return;
+
+        const userTime = currentTime.tz(myTimezone);
+        const currentDay = userTime.day(); // 0 = Sun, 1 = Mon...
+        const currentTimeStr = userTime.format('HH:mm'); // e.g. "14:30"
+
+        const matchingRoutine = routines.find(routine => {
+          let days = routine.days_of_week;
+          if (typeof days === 'string') {
+            try { days = JSON.parse(days); } catch (e) { days = days.split(',').map(Number); }
+          }
+
+          if (!Array.isArray(days) || !days.includes(currentDay)) return false;
+
+          const start = routine.start_time ? routine.start_time.slice(0, 5) : '';
+          const end = routine.end_time ? routine.end_time.slice(0, 5) : '';
+
+          return currentTimeStr >= start && currentTimeStr <= end;
+        });
+
+        if (matchingRoutine && matchingRoutine.status_label !== myStatus) {
+          setMyStatus(matchingRoutine.status_label);
+        }
+      } catch (err) {
+        console.error('Failed to check routines:', err);
+      }
+    };
+
+    checkRoutines();
+    const routineInterval = setInterval(checkRoutines, 10000);
+    return () => clearInterval(routineInterval);
+  }, [user?.userId, currentTime, myStatus, myTimezone]);
+
   const handleUnsyncBoard = async () => {
     if (!window.confirm('Are you sure you want to unsync from this board?')) return;
     alert('Unsync functionality ready to connect to backend!');
@@ -73,12 +119,9 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
 
-  const myTimezone = user?.timezone || dayjs.tz.guess();
-  const partnerTimezone = partner?.timezone || 'Europe/London';
-
   return (
     <div className={`min-h-screen ${currentTheme} text-stone-700 p-8 md:p-16 font-sans transition-colors duration-500 relative`}>
-
+      
       <SettingsDropdown
         user={user}
         memberCount={memberCount}
@@ -88,7 +131,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
         onUnsync={handleUnsyncBoard}
         onDeleteAccount={handleDeleteAccount}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onOpenRoutines={() => setIsRoutinesOpen(true)} />
+        onOpenRoutines={() => setIsRoutinesOpen(true)}/>
 
       <header className="mb-12 text-center max-w-xl mx-auto pt-4">
         <div className="inline-flex items-center justify-center p-3 bg-rose-100/60 text-rose-700/80 rounded-full mb-4 shadow-sm">
@@ -124,13 +167,13 @@ export default function Dashboard({ user: initialUser, onLogout }) {
             time={currentTime}
             currentStatus={currentStatusObj}
             isUser={true}
-            onSelectStatus={setMyStatus} />
+            onSelectStatus={setMyStatus}/>
           <TimeCard
             label={partner?.nickname || partner?.username || 'Your Partner'}
             timezone={partnerTimezone}
             time={currentTime}
             currentStatus={partnerStatusObj}
-            isUser={false} />
+            isUser={false}/>
         </div>
       )}
 
@@ -142,12 +185,12 @@ export default function Dashboard({ user: initialUser, onLogout }) {
         isOpen={isProfileOpen}
         user={user}
         onSave={(updated) => setUser({ ...user, ...updated })}
-        onClose={() => setIsProfileOpen(false)} />
+        onClose={() => setIsProfileOpen(false)}/>
 
       <RoutineScheduler
         isOpen={isRoutinesOpen}
         userId={user?.userId}
-        onClose={() => setIsRoutinesOpen(false)} />
+        onClose={() => setIsRoutinesOpen(false)}/>
 
       <footer className="mt-24 text-center text-stone-400 text-xs tracking-wide">
         Built with love :3
