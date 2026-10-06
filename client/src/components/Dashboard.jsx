@@ -61,6 +61,24 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     return () => clearInterval(interval);
   }, [user?.boardId, user?.userId]);
 
+  // Fetch latest user info on mount to persist nickname/timezone across reloads
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const currentUserId = user?.userId || user?.id;
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/users/${currentUserId}`);
+        const data = await res.json();
+        if (data && !data.error) {
+          setUser(prev => ({ ...prev, ...data }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch latest user profile:', err);
+      }
+    };
+    fetchUserData();
+  }, []);
+
   const myTimezone = user?.timezone || dayjs.tz.guess();
   const partnerTimezone = partner?.timezone || 'Europe/London';
 

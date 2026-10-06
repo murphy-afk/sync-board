@@ -230,12 +230,24 @@ app.get('/api/boards/:boardId/members', async (req, res) => {
 // Get user profile info
 app.get('/api/users/:userId', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, username, nickname, timezone, board_id FROM users WHERE id = ?', [req.params.userId]);
+    const [rows] = await pool.query(
+      'SELECT id, username, nickname, timezone, board_id FROM users WHERE id = ?', 
+      [req.params.userId]
+    );
+    
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
+    
+    const user = rows[0];
+    res.json({
+      userId: user.id,
+      username: user.username,
+      nickname: user.nickname || '',
+      timezone: user.timezone || 'UTC',
+      boardId: user.board_id,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch user profile' });
+    console.error('Failed to fetch user profile:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
