@@ -1,16 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { FiTrash2, FiCheck, FiDownload, FiImage, FiEdit3, FiMaximize2, FiX, FiAlertTriangle } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiTrash2, FiCheck, FiDownload, FiImage, FiEdit3, FiMaximize2, FiX, FiAlertTriangle, FiChevronDown } from 'react-icons/fi';
 
-const PASTEL_COLORS = [
-'#000000', '#78716c', '#fecdd3', '#fed7aa',
-'#fef08a', '#bbf7d0', '#bae6fd', '#c7d2fe', '#f3e8ff'
-];
+const COLOR_PALETTES = {
+  'Warm Pastel': [
+    '#f472b6', '#fb7185', '#f87171', '#fbbf24', '#34d399', '#38bdf8', '#818cf8', '#c084fc', '#e879f9'
+  ],
+  'Cozy Sunset': [
+    '#e07a5f', '#f4a261', '#e9c46a', '#2a9d8f', '#264653', '#e76f51', '#f3c68f', '#ddb892', '#bc6c25'
+  ],
+  'Forest & Earth': [
+    '#606c38', '#283618', '#dda15e', '#bc6c25', '#9b2226', '#ae2012', '#bb3e03', '#ca6702', '#d4a373'
+  ],
+  'Dreamy Dusk': [
+    '#5c6bc0', '#7986cb', '#ab47bc', '#ba68c8', '#ec407a', '#f06292', '#ffb74d', '#ff7043', '#26a69a'
+  ]
+};
 
 const GRID_SIZE = 16;
 
+function DoodleThumbnail({ gridData }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cellSize = canvas.width / GRID_SIZE;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gridData.forEach((color, index) => {
+      const x = (index % GRID_SIZE) * cellSize;
+      const y = Math.floor(index / GRID_SIZE) * cellSize;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, cellSize, cellSize);
+    });
+  }, [gridData]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      width={160} 
+      height={160} 
+      className="w-full aspect-square rounded-xl shadow-inner bg-stone-100" />
+  );
+}
+
 export default function PixelCanvas({ boardId }) {
   const [grid, setGrid] = useState(Array(GRID_SIZE * GRID_SIZE).fill('#FAF7F2'));
-  const [selectedColor, setSelectedColor] = useState('#78716c');
+  const [activePaletteKey, setActivePaletteKey] = useState('Warm Pastel');
+  const [selectedColor, setSelectedColor] = useState(COLOR_PALETTES['Warm Pastel'][0]);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
   const [gallery, setGallery] = useState([]);
@@ -23,6 +61,12 @@ export default function PixelCanvas({ boardId }) {
       fetchDoodles();
     }
   }, [boardId]);
+
+  const handlePaletteChange = (e) => {
+    const paletteName = e.target.value;
+    setActivePaletteKey(paletteName);
+    setSelectedColor(COLOR_PALETTES[paletteName][0]);
+  };
 
   const fetchDoodles = async () => {
     try {
@@ -82,6 +126,8 @@ export default function PixelCanvas({ boardId }) {
     }
   };
 
+  const currentColors = COLOR_PALETTES[activePaletteKey];
+
   return (
     <div className="max-w-2xl mx-auto bg-[#FAF7F2] p-8 rounded-4xl border border-stone-200/60 shadow-md flex flex-col items-center relative">
       <div className="flex items-center gap-2 mb-6 bg-[#F3EDE2] p-1.5 rounded-full border border-stone-200/60">
@@ -104,9 +150,26 @@ export default function PixelCanvas({ boardId }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between w-full mt-8 gap-4 px-2">
+          <div className="w-full max-w-95 mt-6 flex items-center justify-between px-4 py-2.5 bg-[#F3EDE2] rounded-2xl border border-stone-200/60">
+            <span className="text-xs font-medium text-stone-600">Color Palette</span>
+            <div className="relative">
+              <select
+                value={activePaletteKey}
+                onChange={handlePaletteChange}
+                className="appearance-none bg-white/80 border border-stone-300 text-stone-700 text-xs font-medium rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer">
+                {Object.keys(COLOR_PALETTES).map((paletteName) => (
+                  <option key={paletteName} value={paletteName}>
+                    {paletteName}
+                  </option>
+                ))}
+              </select>
+              <FiChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between w-full mt-4 gap-4 px-2">
             <div className="flex items-center gap-2 bg-[#F3EDE2] p-2 rounded-2xl border border-stone-200/60">
-              {PASTEL_COLORS.map((color) => (
+              {currentColors.map((color) => (
                 <button key={color} className={`w-7 h-7 rounded-full transition-transform ${selectedColor === color ? 'scale-110 ring-2 ring-stone-400' : 'hover:scale-105'}`} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)} />
               ))}
             </div>
@@ -130,14 +193,14 @@ export default function PixelCanvas({ boardId }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-h-100 overflow-y-auto pr-2">
               {gallery.map((item) => (
                 <div key={item.id} onClick={() => setExpandedDoodle(item)} className="bg-white p-4 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col items-center cursor-pointer hover:border-stone-400 transition group relative">
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition flex items-center gap-2">
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition flex items-center gap-2 z-10">
                     <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(item.id); }} className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition" title="Delete doodle">
                       <FiTrash2 className="text-sm" />
                     </button>
                   </div>
 
                   {confirmDeleteId === item.id && (
-                    <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-2xs rounded-2xl flex flex-col items-center justify-center p-4 z-10 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-2xs rounded-2xl flex flex-col items-center justify-center p-4 z-20 animate-fade-in" onClick={(e) => e.stopPropagation()}>
                       <FiAlertTriangle className="text-amber-300 text-2xl mb-2" />
                       <p className="text-xs text-white text-center font-medium mb-4">Delete this doodle?</p>
                       <div className="flex items-center gap-2">
@@ -147,12 +210,8 @@ export default function PixelCanvas({ boardId }) {
                     </div>
                   )}
 
-                  <div className="w-full max-w-45 bg-stone-200 p-1 rounded-xl mb-3">
-                    <div className="grid gap-[0.5px]" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}>
-                      {item.grid.map((c, i) => (
-                        <div key={i} className="aspect-square rounded-2xs" style={{ backgroundColor: c }} />
-                      ))}
-                    </div>
+                  <div className="w-full max-w-45 mb-3">
+                    <DoodleThumbnail gridData={item.grid} />
                   </div>
                   <div className="flex items-center justify-between w-full px-2 text-xs text-stone-400 font-mono">
                     <span>Saved at {item.timestamp}</span>
