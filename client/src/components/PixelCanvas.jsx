@@ -150,13 +150,15 @@ export default function PixelCanvas({ boardId }) {
             </div>
           </div>
 
+          {/* Clean Dropdown Palette Selector */}
           <div className="w-full max-w-95 mt-6 flex items-center justify-between px-4 py-2.5 bg-[#F3EDE2] rounded-2xl border border-stone-200/60">
             <span className="text-xs font-medium text-stone-600">Color Palette</span>
             <div className="relative">
               <select
                 value={activePaletteKey}
                 onChange={handlePaletteChange}
-                className="appearance-none bg-white/80 border border-stone-300 text-stone-700 text-xs font-medium rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer">
+                className="appearance-none bg-white/80 border border-stone-300 text-stone-700 text-xs font-medium rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer"
+              >
                 {Object.keys(COLOR_PALETTES).map((paletteName) => (
                   <option key={paletteName} value={paletteName}>
                     {paletteName}
@@ -167,15 +169,16 @@ export default function PixelCanvas({ boardId }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between w-full mt-4 gap-4 px-2">
-            <div className="flex items-center gap-2 bg-[#F3EDE2] p-2 rounded-2xl border border-stone-200/60">
+          {/* Color Swatches & Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full mt-4 gap-4 px-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 bg-[#F3EDE2] p-2.5 rounded-2xl border border-stone-200/60 w-full sm:w-auto">
               {currentColors.map((color) => (
-                <button key={color} className={`w-7 h-7 rounded-full transition-transform ${selectedColor === color ? 'scale-110 ring-2 ring-stone-400' : 'hover:scale-105'}`} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)} />
+                <button key={color} className={`w-7 h-7 rounded-full transition-transform shrink-0 ${selectedColor === color ? 'scale-110 ring-2 ring-stone-400' : 'hover:scale-105'}`} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)} />
               ))}
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={clearCanvas} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm font-medium transition cursor-pointer"><FiTrash2 /> Clear</button>
-              <button onClick={saveDrawing} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-100/70 hover:bg-emerald-100 text-emerald-800 text-sm font-medium transition cursor-pointer">
+            <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
+              <button onClick={clearCanvas} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm font-medium transition cursor-pointer flex-1 sm:flex-initial"><FiTrash2 /> Clear</button>
+              <button onClick={saveDrawing} className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-100/70 hover:bg-emerald-100 text-emerald-800 text-sm font-medium transition cursor-pointer flex-1 sm:flex-initial">
                 {savedMessage ? <FiCheck className="text-emerald-700" /> : <FiDownload />} {savedMessage ? 'Saved!' : 'Save Doodle'}
               </button>
             </div>

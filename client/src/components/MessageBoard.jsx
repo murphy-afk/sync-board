@@ -146,9 +146,9 @@ export default function MessageBoard({ boardId, author }) {
             className="w-full bg-transparent focus:outline-none text-sm resize-none placeholder:text-stone-400 relative z-10"/>
 
           {/* Theme Selector Bubbles */}
-          <div className="flex flex-wrap items-center justify-between pt-3 border-t border-stone-200/40 mt-2 gap-2 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-medium opacity-70 mr-1">Theme:</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-3 border-t border-stone-200/40 mt-3 gap-3 relative z-10">
+            <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+              <span className="text-[11px] font-medium opacity-70 mr-1 w-full sm:w-auto">Theme:</span>
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
@@ -166,7 +166,7 @@ export default function MessageBoard({ boardId, author }) {
 
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-white text-xs font-medium transition cursor-pointer shadow-sm">
+              className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-white text-xs font-medium transition cursor-pointer shadow-sm w-full sm:w-auto mt-1 sm:mt-0">
               <FiSend /> Send Note
             </button>
           </div>
