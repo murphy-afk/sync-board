@@ -68,8 +68,8 @@ export default function SettingsDropdown({
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 bg-white/80 hover:bg-white px-4 py-2.5 rounded-full border border-stone-200/60 shadow-sm transition cursor-pointer text-stone-700 text-sm font-medium">
-          <FiSettings className={`transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
           <span>{user?.nickname || user?.username}</span>
+          <FiSettings className={`transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
         </button>
 
         {isOpen && (
