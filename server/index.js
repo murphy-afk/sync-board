@@ -70,46 +70,41 @@ app.delete('/api/doodles/:id', async (req, res) => {
 // NOTES
 
 // Get notes for a specific board
-app.get('/api/notes/:boardId', async (req, res) => {
+app.get('/api/messages/:boardId', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM notes WHERE board_id = ? ORDER BY created_at DESC',
+      'SELECT id, board_id, author, content, theme, created_at FROM notes WHERE board_id = ? ORDER BY created_at DESC', 
       [req.params.boardId]
     );
     res.json(rows);
   } catch (err) {
-    console.error(err);
+    console.error('Failed to fetch notes:', err);
     res.status(500).json({ error: 'Failed to fetch notes' });
   }
 });
 
 // Post a new daily note
-app.post('/api/notes', async (req, res) => {
+app.post('/api/messages', async (req, res) => {
   try {
-    const { boardId, author, content } = req.body;
-    if (!boardId || !author || !content) {
-      return res.status(400).json({ error: 'Board ID, author, and content are required' });
-    }
-
-    const [result] = await pool.query(
-      'INSERT INTO notes (board_id, author, content) VALUES (?, ?, ?)',
-      [boardId, author, content]
+    const { boardId, username, message, theme } = req.body;
+    await pool.query(
+      'INSERT INTO notes (board_id, author, content, theme) VALUES (?, ?, ?, ?)',
+      [boardId, username, message, theme || 'default']
     );
-
-    res.status(201).json({ id: result.insertId, success: true });
+    res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to save note' });
+    console.error('Failed to post note:', err);
+    res.status(500).json({ error: 'Failed to post note' });
   }
 });
 
 // Delete a daily note
-app.delete('/api/notes/:id', async (req, res) => {
+app.delete('/api/messages/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM notes WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error('Failed to delete note:', err);
     res.status(500).json({ error: 'Failed to delete note' });
   }
 });
