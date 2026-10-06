@@ -33,6 +33,9 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const [memberCount, setMemberCount] = useState(1);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
+  const [boardName, setBoardName] = useState('Sync Board');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [tempBoardName, setTempBoardName] = useState('Sync Board');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
@@ -134,6 +137,42 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     alert('Delete account functionality ready to connect to backend!');
   };
 
+  useEffect(() => {
+    if (!user?.boardId) return;
+    const fetchBoardName = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/boards/${user.boardId}`);
+        const data = await res.json();
+        if (data && data.name) {
+          setBoardName(data.name);
+          setTempBoardName(data.name);
+        }
+      } catch (err) {
+        console.error('Failed to fetch board name:', err);
+      }
+    };
+    fetchBoardName();
+  }, [user?.boardId]);
+
+  const handleSaveBoardName = async (e) => {
+    e.preventDefault();
+    if (!tempBoardName.trim()) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/boards/${user.boardId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tempBoardName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBoardName(data.name);
+        setIsEditingTitle(false);
+      }
+    } catch (err) {
+      console.error('Failed to update board name:', err);
+    }
+  };
+
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
 
@@ -155,7 +194,26 @@ export default function Dashboard({ user: initialUser, onLogout }) {
         <div className="inline-flex items-center justify-center p-3 bg-rose-100/60 text-rose-700/80 rounded-full mb-4 shadow-sm">
           <FiHeart className="text-lg fill-current" />
         </div>
-        <h1 className="text-4xl md:text-5xl font-light tracking-tight text-stone-800">Sync Board</h1>
+        <br />
+        {/* Editable Board Title */}
+        {isEditingTitle ? (
+          <form onSubmit={handleSaveBoardName} className="flex items-center justify-center gap-2 mb-2">
+            <input
+              type="text"
+              value={tempBoardName}
+              onChange={(e) => setTempBoardName(e.target.value)}
+              className="text-3xl md:text-4xl font-light tracking-tight text-stone-800 bg-white/80 border border-stone-300 rounded-2xl px-4 py-1 text-center focus:outline-none focus:ring-2 focus:ring-rose-200"
+              autoFocus
+              onBlur={() => setIsEditingTitle(false)}/>
+          </form>
+        ) : (
+          <h1
+            onClick={() => setIsEditingTitle(true)}
+            title="Click to rename board"
+            className="text-4xl md:text-5xl font-light tracking-tight text-stone-800 cursor-pointer hover:opacity-80 transition inline-block">
+            {boardName}
+          </h1>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mt-6">

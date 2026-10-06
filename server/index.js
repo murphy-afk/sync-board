@@ -314,3 +314,26 @@ app.delete('/api/routines/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete routine' });
   }
 });
+
+// Get board details
+app.get('/api/boards/:boardId', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM boards WHERE id = ?', [req.params.boardId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Board not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch board details' });
+  }
+});
+
+// Update board name
+app.put('/api/boards/:boardId', async (req, res) => {
+  try {
+    const { name } = req.body;
+    await pool.query('UPDATE boards SET name = ? WHERE id = ?', [name, req.params.boardId]);
+    res.json({ success: true, name });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update board name' });
+  }
+});
+
