@@ -28,10 +28,17 @@ const THEMES = [
   }
 ];
 
-export default function MessageBoard({ boardId, author }) {
+export default function MessageBoard({ boardId, username }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [currentAuthor, setCurrentAuthor] = useState(username || '');
   const [selectedTheme, setSelectedTheme] = useState('default');
+
+  useEffect(() => {
+    if (username) {
+      setCurrentAuthor(username);
+    }
+  }, [username]);
 
   useEffect(() => {
     if (boardId) {
@@ -61,7 +68,7 @@ export default function MessageBoard({ boardId, author }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           boardId, 
-          username: author || 'Anonymous', 
+          username: currentAuthor.trim() || 'Anonymous', 
           message: newMessage,
           theme: selectedTheme 
         })
@@ -138,6 +145,17 @@ export default function MessageBoard({ boardId, author }) {
         <div className={`p-4 rounded-3xl border shadow-inner transition-colors duration-300 ${activeThemeObj.previewBg} relative`}>
           {renderThemeDecorations(selectedTheme)}
           
+          {/* Author/Nickname Input Field */}
+          <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-stone-200/40 relative z-10">
+            <span className="text-xs font-medium opacity-70">From:</span>
+            <input
+              type="text"
+              value={currentAuthor}
+              onChange={(e) => setCurrentAuthor(e.target.value)}
+              placeholder="Your nickname"
+              className="bg-white/70 border border-stone-300/60 rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-stone-400 w-44 text-stone-800"/>
+          </div>
+
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
