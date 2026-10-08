@@ -10,6 +10,7 @@ import SettingsDropdown from './SettingsDropdown';
 import TimeCard from './TimeCard';
 import ProfileModal from './ProfileModal';
 import RoutineScheduler from './RoutineScheduler';
+import PhotoGallery from './PhotoGallery';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -232,6 +233,11 @@ export default function Dashboard({ user: initialUser, onLogout }) {
             className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'notes' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
             <FiMessageSquare /> Daily Notes
           </button>
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'notes' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
+            <FiMessageSquare /> Gallery
+          </button>
         </div>
       </header>
 
@@ -256,6 +262,8 @@ export default function Dashboard({ user: initialUser, onLogout }) {
       {activeTab === 'canvas' && <PixelCanvas boardId={user?.boardId} />}
 
       {activeTab === 'notes' && <MessageBoard boardId={user?.boardId} username={user?.nickname || user?.username} />}
+
+      {activeTab === 'gallery' && <PhotoGallery boardId={user?.boardId} username={user?.nickname || user?.username} />}
 
       <ProfileModal
         isOpen={isProfileOpen}
