@@ -27,7 +27,7 @@ export default function ProfileModal({ isOpen, user, onSave, onClose }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await window.fetch(`http://localhost:5000/api/users/${user.userId}`, {
+      const res = await window.fetch(`/api/users/${user.userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nickname, timezone })

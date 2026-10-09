@@ -57,7 +57,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
       return res.status(400).json({ error: 'Missing image or board ID' });
     }
 
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const imageUrl = `/uploads/${req.file.filename}`;
     const [result] = await pool.query(
       'INSERT INTO gallery_photos (board_id, author, image_url, stickers) VALUES (?, ?, ?, ?)',
       [boardId, author || 'Anonymous', imageUrl, JSON.stringify([])]

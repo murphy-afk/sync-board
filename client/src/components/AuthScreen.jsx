@@ -17,7 +17,7 @@ export default function AuthScreen({ onLoginSuccess }) {
     const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
 
     try {
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -43,7 +43,7 @@ export default function AuthScreen({ onLoginSuccess }) {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/boards/join', {
+      const res = await fetch('/api/boards/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: tempUserData.userId, inviteCode: inviteCode.trim().toUpperCase() })

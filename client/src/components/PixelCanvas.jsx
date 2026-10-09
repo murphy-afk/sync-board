@@ -70,7 +70,7 @@ export default function PixelCanvas({ boardId }) {
 
   const fetchDoodles = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/doodles/${boardId}`);
+      const res = await fetch(`/api/doodles/${boardId}`);
       const data = await res.json();
       const formatted = data.map(item => ({
         id: item.id,
@@ -95,7 +95,7 @@ export default function PixelCanvas({ boardId }) {
   const saveDrawing = async () => {
     if (!boardId) return;
     try {
-      const response = await fetch('http://localhost:5000/api/doodles', {
+      const response = await fetch('/api/doodles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ boardId, grid_data: grid })
@@ -114,7 +114,7 @@ export default function PixelCanvas({ boardId }) {
   const deleteDoodle = async (id, e) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`http://localhost:5000/api/doodles/${id}`, {
+      const response = await fetch(`/api/doodles/${id}`, {
         method: 'DELETE'
       });
       if (response.ok) {

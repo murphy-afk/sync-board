@@ -34,7 +34,7 @@ export default function RoutineScheduler({ isOpen, userId, onClose }) {
 
   const fetchRoutines = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/routines/${userId}`);
+      const res = await fetch(`/api/routines/${userId}`);
       const data = await res.json();
       if (Array.isArray(data)) setRoutines(data);
     } catch (err) {
@@ -59,7 +59,7 @@ export default function RoutineScheduler({ isOpen, userId, onClose }) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/routines', {
+      const res = await fetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, statusLabel, startTime, endTime, daysOfWeek: selectedDays })
@@ -79,7 +79,7 @@ export default function RoutineScheduler({ isOpen, userId, onClose }) {
 
   const handleDeleteRoutine = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/routines/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/routines/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setRoutines(routines.filter(r => r.id !== id));

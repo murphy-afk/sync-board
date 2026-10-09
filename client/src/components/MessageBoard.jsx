@@ -50,7 +50,7 @@ export default function MessageBoard({ boardId, username }) {
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${boardId}`);
+      const res = await fetch(`/api/messages/${boardId}`);
       const data = await res.json();
       if (Array.isArray(data)) setMessages(data);
     } catch (err) {
@@ -63,7 +63,7 @@ export default function MessageBoard({ boardId, username }) {
     if (!newMessage.trim() || !boardId) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -86,7 +86,7 @@ export default function MessageBoard({ boardId, username }) {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${id}`, {
+      const res = await fetch(`/api/messages/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {

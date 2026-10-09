@@ -19,7 +19,7 @@ export default function PhotoGallery({ boardId, username }) {
 
   const fetchPhotos = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/gallery/${boardId}`);
+      const res = await fetch(`/api/gallery/${boardId}`);
       const data = await res.json();
       if (Array.isArray(data)) setPhotos(data);
     } catch (err) {
@@ -38,7 +38,7 @@ export default function PhotoGallery({ boardId, username }) {
 
     setUploading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/gallery', {
+      const res = await fetch('/api/gallery', {
         method: 'POST',
         body: formData
       });
@@ -52,7 +52,7 @@ export default function PhotoGallery({ boardId, username }) {
 
   const handleDeletePhoto = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/gallery/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
       if (res.ok) setPhotos(photos.filter(p => p.id !== id));
     } catch (err) {
       console.error('Error deleting photo:', err);
@@ -82,7 +82,7 @@ export default function PhotoGallery({ boardId, username }) {
 
   const saveStickersToBackend = async (photoId, newStickers) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/gallery/${photoId}/stickers`, {
+      const res = await fetch(`/api/gallery/${photoId}/stickers`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stickers: newStickers })

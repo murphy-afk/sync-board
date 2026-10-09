@@ -48,7 +48,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     const fetchMembers = async () => {
       if (!user?.boardId) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/boards/${user.boardId}/members`);
+        const res = await fetch(`/api/boards/${user.boardId}/members`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setMemberCount(data.length);
@@ -71,7 +71,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
       const currentUserId = user?.userId || user?.id;
       if (!currentUserId) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/users/${currentUserId}`);
+        const res = await fetch(`/api/users/${currentUserId}`);
         const data = await res.json();
         if (data && !data.error) {
           setUser(prev => ({ ...prev, ...data }));
@@ -92,7 +92,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
 
     const checkRoutines = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/routines/${user.userId}`);
+        const res = await fetch(`/api/routines/${user.userId}`);
         const routines = await res.json();
         
         if (!Array.isArray(routines) || routines.length === 0) return;
@@ -142,7 +142,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     if (!user?.boardId) return;
     const fetchBoardName = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/boards/${user.boardId}`);
+        const res = await fetch(`/api/boards/${user.boardId}`);
         const data = await res.json();
         if (data && data.name) {
           setBoardName(data.name);
@@ -159,7 +159,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     e.preventDefault();
     if (!tempBoardName.trim()) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/boards/${user.boardId}`, {
+      const res = await fetch(`/api/boards/${user.boardId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: tempBoardName })
