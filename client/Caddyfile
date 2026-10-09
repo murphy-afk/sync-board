@@ -3,16 +3,6 @@
 
 	encode gzip
 
-	# Backend API
-	handle /api/* {
-		reverse_proxy server:5000
-	}
-
-	# Backend-served uploads (express.static /uploads in server/index.js)
-	handle /uploads/* {
-		reverse_proxy server:5000
-	}
-
 	# Static frontend with SPA fallback
 	handle {
 		try_files {http.request.uri.path} /index.html
