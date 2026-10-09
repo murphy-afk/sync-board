@@ -6,6 +6,8 @@ services:
     volumes:
       - ./server/uploads:/app/uploads
     restart: unless-stopped
+    networks:
+      - services
 
   client:
     build: ./client
