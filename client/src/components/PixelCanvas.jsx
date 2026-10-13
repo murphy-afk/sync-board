@@ -50,11 +50,12 @@ export default function PixelCanvas({ boardId }) {
   const [activePaletteKey, setActivePaletteKey] = useState('Warm Pastel');
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTES['Warm Pastel'][0]);
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [savedMessage, setSavedMessage] = useState(false);
+  const [savedMessage, setSavedMessage] = useState(null);
   const [gallery, setGallery] = useState([]);
   const [view, setView] = useState('canvas');
   const [expandedDoodle, setExpandedDoodle] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     if (boardId) {
@@ -94,21 +95,37 @@ export default function PixelCanvas({ boardId }) {
 
   const saveDrawing = async () => {
     if (!boardId) return;
+    const isEditing = editingId !== null;
     try {
-      const response = await fetch('/api/doodles', {
-        method: 'POST',
+      const response = await fetch(isEditing ? `/api/doodles/${editingId}` : '/api/doodles', {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ boardId, grid_data: grid })
+        body: JSON.stringify({ ...(isEditing ? {} : { boardId }), grid_data: grid })
       });
 
       if (response.ok) {
         fetchDoodles();
-        setSavedMessage(true);
-        setTimeout(() => setSavedMessage(false), 2500);
+        if (isEditing) setEditingId(null);
+        setSavedMessage(isEditing ? 'Updated!' : 'Saved!');
+        setTimeout(() => setSavedMessage(null), 2500);
       }
     } catch (err) {
-      console.error('Error saving doodle:', err);
+      console.error(isEditing ? 'Error updating doodle:' : 'Error saving doodle:', err);
     }
+  };
+
+  const startEdit = (item, e) => {
+    e.stopPropagation();
+    setGrid([...item.grid]);
+    setEditingId(item.id);
+    setExpandedDoodle(null);
+    setConfirmDeleteId(null);
+    setView('canvas');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    clearCanvas();
   };
 
   const deleteDoodle = async (id, e) => {
@@ -120,6 +137,7 @@ export default function PixelCanvas({ boardId }) {
       if (response.ok) {
         setGallery(gallery.filter(item => item.id !== id));
         setConfirmDeleteId(null);
+        if (editingId === id) cancelEdit();
       }
     } catch (err) {
       console.error('Error deleting doodle:', err);
@@ -141,6 +159,15 @@ export default function PixelCanvas({ boardId }) {
             <h2 className="text-2xl font-light text-stone-800">Shared Pixel Canvas</h2>
             <p className="text-stone-500 text-sm mt-1">Draw a little something to leave on each other's board.</p>
           </div>
+
+          {editingId !== null && (
+            <div className="w-full mb-4 flex items-center justify-between gap-3 bg-amber-100/70 border border-amber-300/70 text-amber-800 px-4 py-2.5 rounded-2xl text-sm">
+              <span className="font-medium">Editing a saved doodle</span>
+              <button onClick={cancelEdit} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/70 hover:bg-white text-amber-800 text-xs font-medium transition cursor-pointer">
+                <FiX /> Cancel edit
+              </button>
+            </div>
+          )}
 
           <div className="w-full max-w-95 bg-white p-3 rounded-2xl shadow-inner border border-stone-200/60">
             <div className="grid gap-0.5 bg-stone-300 p-1 rounded-xl select-none" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }} onMouseDown={() => setIsMouseDown(true)} onMouseUp={() => setIsMouseDown(false)} onMouseLeave={() => setIsMouseDown(false)}>
@@ -179,7 +206,7 @@ export default function PixelCanvas({ boardId }) {
             <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
               <button onClick={clearCanvas} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm font-medium transition cursor-pointer flex-1 sm:flex-initial"><FiTrash2 /> Clear</button>
               <button onClick={saveDrawing} className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-100/70 hover:bg-emerald-100 text-emerald-800 text-sm font-medium transition cursor-pointer flex-1 sm:flex-initial">
-                {savedMessage ? <FiCheck className="text-emerald-700" /> : <FiDownload />} {savedMessage ? 'Saved!' : 'Save Doodle'}
+                {savedMessage ? <FiCheck className="text-emerald-700" /> : <FiDownload />} {savedMessage ? savedMessage : editingId !== null ? 'Update Doodle' : 'Save Doodle'}
               </button>
             </div>
           </div>
@@ -195,8 +222,11 @@ export default function PixelCanvas({ boardId }) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-h-100 overflow-y-auto pr-2">
               {gallery.map((item) => (
-                <div key={item.id} onClick={() => setExpandedDoodle(item)} className="bg-white p-4 rounded-2xl border border-stone-200/60 shadow-sm flex flex-col items-center cursor-pointer hover:border-stone-400 transition group relative">
+                <div key={item.id} onClick={() => setExpandedDoodle(item)} className={`bg-white p-4 rounded-2xl border shadow-sm flex flex-col items-center cursor-pointer hover:border-stone-400 transition group relative ${editingId === item.id ? 'border-amber-400 ring-2 ring-amber-200' : 'border-stone-200/60'}`}>
                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition flex items-center gap-2 z-10">
+                    <button onClick={(e) => startEdit(item, e)} className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition" title="Edit doodle">
+                      <FiEdit3 className="text-sm" />
+                    </button>
                     <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(item.id); }} className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition" title="Delete doodle">
                       <FiTrash2 className="text-sm" />
                     </button>
@@ -244,6 +274,15 @@ export default function PixelCanvas({ boardId }) {
             </div>
 
             <span className="text-xs text-stone-400 font-mono">Saved at {expandedDoodle.timestamp}</span>
+
+            <div className="flex items-center gap-2 mt-4">
+              <button onClick={(e) => startEdit(expandedDoodle, e)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-100/70 hover:bg-amber-100 text-amber-800 text-sm font-medium transition cursor-pointer">
+                <FiEdit3 /> Edit
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(expandedDoodle.id); setExpandedDoodle(null); }} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-100/70 hover:bg-rose-100 text-rose-700 text-sm font-medium transition cursor-pointer">
+                <FiTrash2 /> Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

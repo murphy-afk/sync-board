@@ -29,6 +29,26 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  const { grid_data } = req.body;
+  if (!grid_data) {
+    return res.status(400).json({ error: 'grid_data is required' });
+  }
+  try {
+    const [result] = await pool.query(
+      'UPDATE doodles SET grid_data = ? WHERE id = ?',
+      [JSON.stringify(grid_data), req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Doodle not found' });
+    }
+    res.json({ id: Number(req.params.id), grid_data });
+  } catch (err) {
+    console.error('Error updating doodle:', err);
+    res.status(500).json({ error: 'Failed to update doodle' });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM doodles WHERE id = ?', [req.params.id]);
