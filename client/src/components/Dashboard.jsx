@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiBriefcase, FiBookOpen, FiMoon } from 'react-icons/fi';
+import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiBriefcase, FiBookOpen, FiMoon, FiImage } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from "react-icons/md";
 import PixelCanvas from './PixelCanvas';
 import MessageBoard from './MessageBoard';
@@ -11,6 +11,7 @@ import TimeCard from './TimeCard';
 import ProfileModal from './ProfileModal';
 import RoutineScheduler from './RoutineScheduler';
 import PhotoGallery from './PhotoGallery';
+import CreateBoardScreen from './CreateBoardScreen';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -38,6 +39,19 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempBoardName, setTempBoardName] = useState('Sync Board');
 
+  // Keep the local copy (and localStorage) in sync whenever the user changes
+  const updateUser = (updates) => {
+    setUser(prev => {
+      const next = { ...prev, ...updates };
+      try {
+        localStorage.setItem('sync_board_user', JSON.stringify(next));
+      } catch (err) {
+        console.error('Failed to persist user:', err);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
     return () => clearInterval(timer);
@@ -47,12 +61,13 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   useEffect(() => {
     const fetchMembers = async () => {
       if (!user?.boardId) return;
+      const myId = user?.userId || user?.id;
       try {
         const res = await fetch(`/api/boards/${user.boardId}/members`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setMemberCount(data.length);
-          const foundPartner = data.find(m => m.id !== user.userId);
+          const foundPartner = data.find(m => m.id !== myId);
           setPartner(foundPartner || null);
         }
       } catch (err) {
@@ -63,7 +78,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     fetchMembers();
     const interval = setInterval(fetchMembers, 5000);
     return () => clearInterval(interval);
-  }, [user?.boardId, user?.userId]);
+  }, [user?.boardId, user?.userId, user?.id]);
 
   // Fetch latest user info on mount to persist nickname/timezone across reloads
   useEffect(() => {
@@ -129,8 +144,35 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   }, [user?.userId, currentTime, myStatus, myTimezone]);
 
   const handleUnsyncBoard = async () => {
-    if (!window.confirm('Are you sure you want to unsync from this board?')) return;
-    alert('Unsync functionality ready to connect to backend!');
+    try {
+      const res = await fetch('/api/boards/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.userId || user?.id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to leave board');
+
+      // The board and all of its content stay intact — only this member loses access.
+      updateUser({ boardId: null, inviteCode: null });
+      setPartner(null);
+      setMemberCount(1);
+      setBoardName('Sync Board');
+      setTempBoardName('Sync Board');
+      setActiveTab('board');
+    } catch (err) {
+      console.error('Error leaving board:', err);
+      alert(err.message);
+    }
+  };
+
+  const handleBoardCreated = ({ boardId, inviteCode, boardName: newName }) => {
+    updateUser({ boardId, inviteCode });
+    if (newName) {
+      setBoardName(newName);
+      setTempBoardName(newName);
+    }
+    setActiveTab('board');
   };
 
   const handleDeleteAccount = async () => {
@@ -177,6 +219,11 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
 
+  // No board access (left a board, or logged in without one): create a new one
+  if (!user?.boardId) {
+    return <CreateBoardScreen user={user} onBoardCreated={handleBoardCreated} />;
+  }
+
   return (
     <div className={`min-h-screen ${currentTheme} text-stone-700 p-8 md:p-16 font-sans transition-colors duration-500 relative`}>
       
@@ -216,6 +263,17 @@ export default function Dashboard({ user: initialUser, onLogout }) {
           </h1>
         )}
 
+        {/* Board members */}
+        <p className="text-sm text-stone-500 mt-2">
+          {user?.nickname || user?.username || 'You'}
+          {partner && (
+            <>
+              <span className="text-stone-400 mx-1.5">&amp;</span>
+              {partner.nickname || partner.username}
+            </>
+          )}
+        </p>
+
         {/* Navigation Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mt-6">
           <button
@@ -235,8 +293,8 @@ export default function Dashboard({ user: initialUser, onLogout }) {
           </button>
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'notes' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
-            <FiMessageSquare /> Gallery
+            className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition cursor-pointer ${activeTab === 'gallery' ? 'bg-stone-800 text-white shadow-sm' : 'bg-[#FAF7F2]/60 text-stone-600 hover:bg-[#FAF7F2]'}`}>
+            <FiImage /> Gallery
           </button>
         </div>
       </header>
@@ -268,7 +326,8 @@ export default function Dashboard({ user: initialUser, onLogout }) {
       <ProfileModal
         isOpen={isProfileOpen}
         user={user}
-        onSave={(updated) => setUser({ ...user, ...updated })}
+        inviteCode={user?.inviteCode}
+        onSave={(updated) => updateUser(updated)}
         onClose={() => setIsProfileOpen(false)}/>
 
       <RoutineScheduler

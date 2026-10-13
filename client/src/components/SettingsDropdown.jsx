@@ -38,7 +38,7 @@ export default function SettingsDropdown({
     setIsOpen(false);
     setModalConfig({
       title: 'Unsync Board',
-      message: 'Are you sure you want to unsync from this board? You can always join back with an invite code.',
+      message: 'Are you sure you want to unsync from this board? The board and everything on it will stay exactly as it is — you\'ll just lose access and will be able to create your own new board.',
       confirmText: 'Yes, unsync',
       confirmColor: 'dark',
       action: () => {
@@ -77,8 +77,8 @@ export default function SettingsDropdown({
             <div className="px-5 py-3 border-b border-stone-200/60">
               <p className="text-xs text-stone-400 font-mono">Logged in as</p>
               <p className="text-sm font-semibold text-stone-800">{user?.nickname || user?.username}</p>
-              {memberCount < 2 && (
-                <p className="text-xs text-rose-600 font-mono mt-1">Code: {user?.inviteCode}</p>
+              {memberCount < 2 && user?.inviteCode && (
+                <p className="text-xs text-rose-600 font-mono mt-1">Code: {user.inviteCode}</p>
               )}
             </div>
 

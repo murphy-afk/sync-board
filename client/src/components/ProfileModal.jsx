@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiX, FiUser, FiGlobe, FiClock } from 'react-icons/fi';
+import { FiX, FiUser, FiGlobe, FiClock, FiCopy, FiCheck } from 'react-icons/fi';
 
 
 const TIMEZONES = [
@@ -16,12 +16,23 @@ const TIMEZONES = [
   'Australia/Sydney'
 ];
 
-export default function ProfileModal({ isOpen, user, onSave, onClose }) {
+export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose }) {
   const [nickname, setNickname] = useState(user?.nickname || user?.username || '');
   const [timezone, setTimezone] = useState(user?.timezone || 'UTC');
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy invite code:', err);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -92,6 +103,24 @@ export default function ProfileModal({ isOpen, user, onSave, onClose }) {
               <FiClock className="absolute right-4 text-stone-400 pointer-events-none text-xs" />
             </div>
           </div>
+
+          {inviteCode && (
+            <div>
+              <label className="text-xs font-medium text-stone-600 uppercase tracking-wider block mb-2">Board Invite Code</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white border border-stone-200 rounded-2xl px-4 py-3 text-sm font-mono tracking-widest text-stone-800 text-center">
+                  {inviteCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyCode}
+                  className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-medium transition cursor-pointer shrink-0">
+                  {copied ? <FiCheck className="text-emerald-600" /> : <FiCopy />} {copied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <p className="text-[11px] text-stone-400 mt-1 ml-1">Share this code so your partner can join your board.</p>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 pt-4">
             <button
