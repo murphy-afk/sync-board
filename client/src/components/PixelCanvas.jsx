@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiTrash2, FiCheck, FiDownload, FiImage, FiEdit3, FiMaximize2, FiX, FiAlertTriangle, FiChevronDown } from 'react-icons/fi';
+import { FiTrash2, FiCheck, FiDownload, FiImage, FiEdit3, FiMaximize2, FiX, FiAlertTriangle, FiChevronDown, FiPenTool } from 'react-icons/fi';
+import { LuEraser, LuPaintBucket } from 'react-icons/lu';
 
 const COLOR_PALETTES = {
   'Warm Pastel': [
@@ -17,6 +18,7 @@ const COLOR_PALETTES = {
 };
 
 const GRID_SIZE = 16;
+const BG_COLOR = '#FAF7F2';
 
 function DoodleThumbnail({ gridData }) {
   const canvasRef = useRef(null);
@@ -46,9 +48,10 @@ function DoodleThumbnail({ gridData }) {
 }
 
 export default function PixelCanvas({ boardId }) {
-  const [grid, setGrid] = useState(Array(GRID_SIZE * GRID_SIZE).fill('#FAF7F2'));
+  const [grid, setGrid] = useState(Array(GRID_SIZE * GRID_SIZE).fill(BG_COLOR));
   const [activePaletteKey, setActivePaletteKey] = useState('Warm Pastel');
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTES['Warm Pastel'][0]);
+  const [tool, setTool] = useState('draw');
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [savedMessage, setSavedMessage] = useState(null);
   const [gallery, setGallery] = useState([]);
@@ -67,6 +70,7 @@ export default function PixelCanvas({ boardId }) {
     const paletteName = e.target.value;
     setActivePaletteKey(paletteName);
     setSelectedColor(COLOR_PALETTES[paletteName][0]);
+    if (tool === 'erase') setTool('draw');
   };
 
   const fetchDoodles = async () => {
@@ -84,14 +88,46 @@ export default function PixelCanvas({ boardId }) {
     }
   };
 
-  const handlePixelClick = (index) => {
+  // Flood fill: paints the contiguous area of the clicked colour, stopping at any
+  // pixel of a different colour — so a region enclosed by other colours fills exactly.
+  const fillArea = (startIndex, fillColor) => {
+    const targetColor = grid[startIndex];
+    if (targetColor === fillColor) return;
+
     const newGrid = [...grid];
-    newGrid[index] = selectedColor;
+    const stack = [startIndex];
+
+    while (stack.length > 0) {
+      const index = stack.pop();
+      if (newGrid[index] !== targetColor) continue;
+      newGrid[index] = fillColor;
+
+      const x = index % GRID_SIZE;
+      const y = Math.floor(index / GRID_SIZE);
+      if (x > 0) stack.push(index - 1);
+      if (x < GRID_SIZE - 1) stack.push(index + 1);
+      if (y > 0) stack.push(index - GRID_SIZE);
+      if (y < GRID_SIZE - 1) stack.push(index + GRID_SIZE);
+    }
+
     setGrid(newGrid);
   };
 
-  const handleMouseEnter = (index) => { if (isMouseDown) handlePixelClick(index); };
-  const clearCanvas = () => setGrid(Array(GRID_SIZE * GRID_SIZE).fill('#FAF7F2'));
+  const handlePixelClick = (index) => {
+    if (tool === 'fill') {
+      fillArea(index, selectedColor);
+      return;
+    }
+    const newGrid = [...grid];
+    newGrid[index] = tool === 'erase' ? BG_COLOR : selectedColor;
+    setGrid(newGrid);
+  };
+
+  // Fill applies once, on the initial click — dragging shouldn't re-trigger it
+  const handleMouseEnter = (index) => {
+    if (isMouseDown && tool !== 'fill') handlePixelClick(index);
+  };
+  const clearCanvas = () => setGrid(Array(GRID_SIZE * GRID_SIZE).fill(BG_COLOR));
 
   const saveDrawing = async () => {
     if (!boardId) return;
@@ -145,6 +181,7 @@ export default function PixelCanvas({ boardId }) {
   };
 
   const currentColors = COLOR_PALETTES[activePaletteKey];
+  const cellCursor = tool === 'erase' ? 'cursor-cell' : tool === 'fill' ? 'cursor-crosshair' : 'cursor-pointer';
 
   return (
     <div className="max-w-2xl mx-auto bg-[#FAF7F2] p-8 rounded-4xl border border-stone-200/60 shadow-md flex flex-col items-center relative">
@@ -172,13 +209,38 @@ export default function PixelCanvas({ boardId }) {
           <div className="w-full max-w-95 bg-white p-3 rounded-2xl shadow-inner border border-stone-200/60">
             <div className="grid gap-0.5 bg-stone-300 p-1 rounded-xl select-none" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }} onMouseDown={() => setIsMouseDown(true)} onMouseUp={() => setIsMouseDown(false)} onMouseLeave={() => setIsMouseDown(false)}>
               {grid.map((color, index) => (
-                <div key={index} className="aspect-square cursor-pointer transition-colors duration-75 rounded-xs" style={{ backgroundColor: color }} onMouseDown={() => handlePixelClick(index)} onMouseEnter={() => handleMouseEnter(index)} />
+                <div key={index} className={`aspect-square transition-colors duration-75 rounded-xs ${cellCursor}`} style={{ backgroundColor: color }} onMouseDown={() => handlePixelClick(index)} onMouseEnter={() => handleMouseEnter(index)} />
               ))}
             </div>
           </div>
 
-          {/* Clean Dropdown Palette Selector */}
+          {/* Tool selector */}
           <div className="w-full max-w-95 mt-6 flex items-center justify-between px-4 py-2.5 bg-[#F3EDE2] rounded-2xl border border-stone-200/60">
+            <span className="text-xs font-medium text-stone-600">Tool</span>
+            <div className="flex items-center gap-1 bg-white/80 p-1 rounded-xl border border-stone-300">
+              <button
+                onClick={() => setTool('draw')}
+                title="Draw pixel by pixel"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${tool === 'draw' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-600 hover:text-stone-900'}`}>
+                <FiPenTool className="text-sm" /> Draw
+              </button>
+              <button
+                onClick={() => setTool('erase')}
+                title="Erase single pixels"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${tool === 'erase' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-600 hover:text-stone-900'}`}>
+                <LuEraser className="text-sm" /> Erase
+              </button>
+              <button
+                onClick={() => setTool('fill')}
+                title="Fill an enclosed area with the selected color"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${tool === 'fill' ? 'bg-stone-800 text-white shadow-sm' : 'text-stone-600 hover:text-stone-900'}`}>
+                <LuPaintBucket className="text-sm" /> Fill
+              </button>
+            </div>
+          </div>
+
+          {/* Clean Dropdown Palette Selector */}
+          <div className="w-full max-w-95 mt-3 flex items-center justify-between px-4 py-2.5 bg-[#F3EDE2] rounded-2xl border border-stone-200/60">
             <span className="text-xs font-medium text-stone-600">Color Palette</span>
             <div className="relative">
               <select
@@ -200,7 +262,7 @@ export default function PixelCanvas({ boardId }) {
           <div className="flex flex-col sm:flex-row items-center justify-between w-full mt-4 gap-4 px-2">
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 bg-[#F3EDE2] p-2.5 rounded-2xl border border-stone-200/60 w-full sm:w-auto">
               {currentColors.map((color) => (
-                <button key={color} className={`w-7 h-7 rounded-full transition-transform shrink-0 ${selectedColor === color ? 'scale-110 ring-2 ring-stone-400' : 'hover:scale-105'}`} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)} />
+                <button key={color} className={`w-7 h-7 rounded-full transition-transform shrink-0 ${selectedColor === color && tool !== 'erase' ? 'scale-110 ring-2 ring-stone-400' : 'hover:scale-105'}`} style={{ backgroundColor: color }} onClick={() => { setSelectedColor(color); if (tool === 'erase') setTool('draw'); }} title="Use this color" />
               ))}
             </div>
             <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
