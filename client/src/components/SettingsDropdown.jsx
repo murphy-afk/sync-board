@@ -38,7 +38,7 @@ export default function SettingsDropdown({
     setIsOpen(false);
     setModalConfig({
       title: 'Unsync Board',
-      message: 'Are you sure you want to unsync from this board? The board and everything on it will stay exactly as it is — you\'ll just lose access and will be able to create your own new board.',
+      message: 'Are you sure you want to unsync from this board? The board and everything on it will stay exactly as it is. You\'ll just lose access and will be able to create your own new board.',
       confirmText: 'Yes, unsync',
       confirmColor: 'dark',
       action: () => {

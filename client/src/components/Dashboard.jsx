@@ -153,7 +153,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to leave board');
 
-      // The board and all of its content stay intact — only this member loses access.
+      // The board and all of its content stay intact. Only this member loses access.
       updateUser({ boardId: null, inviteCode: null });
       setPartner(null);
       setMemberCount(1);

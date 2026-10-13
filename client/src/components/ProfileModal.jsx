@@ -82,8 +82,7 @@ export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="Enter nickname..."
-                className="w-full bg-white border border-stone-200 rounded-2xl pl-11 pr-4 py-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              />
+                className="w-full bg-white border border-stone-200 rounded-2xl pl-11 pr-4 py-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
             </div>
             <p className="text-[11px] text-stone-400 mt-1 ml-1">This will automatically display on your daily notes.</p>
           </div>

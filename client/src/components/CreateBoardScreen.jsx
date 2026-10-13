@@ -62,7 +62,7 @@ export default function CreateBoardScreen({ user, onBoardCreated }) {
           <>
             <h1 className="text-3xl font-light tracking-tight text-stone-800 mb-2">Create a new board</h1>
             <p className="text-stone-500 text-sm mb-6 text-center">
-              You're not part of a board right now. Every account belongs to one board at a time — start a fresh one, or join your partner's with their invite code.
+              You're not part of a board right now. Every account belongs to one board at a time. Start a fresh one, or join your partner's with their invite code.
             </p>
 
             {error && (
@@ -79,8 +79,7 @@ export default function CreateBoardScreen({ user, onBoardCreated }) {
                   placeholder={user?.username ? `${user.username}'s Board` : 'Board name'}
                   value={boardName}
                   onChange={(e) => setBoardName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                />
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>
 
               <button
@@ -120,8 +119,7 @@ export default function CreateBoardScreen({ user, onBoardCreated }) {
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm font-mono uppercase tracking-widest text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                  required
-                />
+                  required />
               </div>
 
               <button

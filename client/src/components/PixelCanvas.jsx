@@ -89,7 +89,7 @@ export default function PixelCanvas({ boardId }) {
   };
 
   // Flood fill: paints the contiguous area of the clicked colour, stopping at any
-  // pixel of a different colour — so a region enclosed by other colours fills exactly.
+  // pixel of a different colour, so a region enclosed by other colours fills exactly.
   const fillArea = (startIndex, fillColor) => {
     const targetColor = grid[startIndex];
     if (targetColor === fillColor) return;
@@ -123,7 +123,7 @@ export default function PixelCanvas({ boardId }) {
     setGrid(newGrid);
   };
 
-  // Fill applies once, on the initial click — dragging shouldn't re-trigger it
+  // Fill applies once, on the initial click, so dragging shouldn't re-trigger it
   const handleMouseEnter = (index) => {
     if (isMouseDown && tool !== 'fill') handlePixelClick(index);
   };
@@ -246,8 +246,7 @@ export default function PixelCanvas({ boardId }) {
               <select
                 value={activePaletteKey}
                 onChange={handlePaletteChange}
-                className="appearance-none bg-white/80 border border-stone-300 text-stone-700 text-xs font-medium rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer"
-              >
+                className="appearance-none bg-white/80 border border-stone-300 text-stone-700 text-xs font-medium rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer">
                 {Object.keys(COLOR_PALETTES).map((paletteName) => (
                   <option key={paletteName} value={paletteName}>
                     {paletteName}
