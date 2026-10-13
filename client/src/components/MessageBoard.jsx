@@ -147,13 +147,13 @@ export default function MessageBoard({ boardId, username }) {
           
           {/* Author/Nickname Input Field */}
           <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-stone-200/40 relative z-10">
-            <span className="text-xs font-medium opacity-70">From:</span>
+            <span className="text-xs font-medium opacity-70 shrink-0">From:</span>
             <input
               type="text"
               value={currentAuthor}
               onChange={(e) => setCurrentAuthor(e.target.value)}
               placeholder="Your nickname"
-              className="bg-white/70 border border-stone-300/60 rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-stone-400 w-44 text-stone-800"/>
+              className="bg-white/70 border border-stone-300/60 rounded-lg px-2.5 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-stone-400 flex-1 min-w-0 sm:flex-none sm:w-44 text-stone-800"/>
           </div>
 
           <textarea
