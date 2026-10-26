@@ -207,7 +207,13 @@ export default function MessageBoard({ boardId, username }) {
                   <span className="font-medium text-xs tracking-wide opacity-80">{msg.author}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] opacity-60 font-mono">
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.created_at).toLocaleString([], {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </span>
                     <button 
                       onClick={() => handleDelete(msg.id)} 
