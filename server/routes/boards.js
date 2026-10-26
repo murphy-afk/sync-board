@@ -81,7 +81,10 @@ router.post('/join', async (req, res) => {
 
 router.get('/:boardId/members', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, username, nickname FROM users WHERE board_id = ?', [req.params.boardId]);
+    const [rows] = await pool.query(
+      "SELECT id, username, nickname, COALESCE(timezone, 'UTC') AS timezone FROM users WHERE board_id = ?",
+      [req.params.boardId]
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
