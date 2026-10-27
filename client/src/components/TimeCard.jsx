@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiClock, FiCalendar, FiSun, FiMoon, FiBriefcase, FiBookOpen } from 'react-icons/fi';
+import { FiClock, FiCalendar, FiSun, FiMoon, FiBriefcase, FiBookOpen, FiLock } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from 'react-icons/md';
 
 const statusOptions = [
@@ -7,6 +7,7 @@ const statusOptions = [
   { label: 'At Work', icon: <FiBriefcase className="text-amber-700/70 text-lg" /> },
   { label: 'Studying', icon: <FiBookOpen className="text-rose-700/70 text-lg" /> },
   { label: 'Sleeping', icon: <FiMoon className="text-indigo-700/70 text-lg" /> },
+  { label: 'Busy', icon: <FiLock className="text-stone-700/70 text-lg" /> }
 ];
 
 export default function TimeCard({ label, timezone, time, currentStatus, isUser, onSelectStatus }) {
