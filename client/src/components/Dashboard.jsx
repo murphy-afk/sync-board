@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiBriefcase, FiBookOpen, FiMoon, FiImage } from 'react-icons/fi';
+import { FiHeart, FiGrid, FiCompass, FiMessageSquare, FiBriefcase, FiBookOpen, FiMoon, FiImage, FiLock } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from "react-icons/md";
 import PixelCanvas from './PixelCanvas';
 import MessageBoard from './MessageBoard';
@@ -21,6 +21,7 @@ const statusOptions = [
   { label: 'At Work', icon: <FiBriefcase className="text-amber-700/70 text-lg" /> },
   { label: 'Studying', icon: <FiBookOpen className="text-rose-700/70 text-lg" /> },
   { label: 'Sleeping', icon: <FiMoon className="text-indigo-700/70 text-lg" /> },
+  { label: 'Busy', icon: <FiLock className="text-stone-700/70 text-lg" /> },
 ];
 
 export default function Dashboard({ user: initialUser, onLogout }) {

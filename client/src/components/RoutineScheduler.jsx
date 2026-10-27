@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiX, FiClock, FiCalendar, FiPlus, FiTrash2, FiCheck, FiBriefcase, FiBookOpen, FiMoon } from 'react-icons/fi';
+import { FiX, FiClock, FiCalendar, FiPlus, FiTrash2, FiCheck, FiBriefcase, FiBookOpen, FiMoon, FiLock } from 'react-icons/fi';
 import { MdOutlineFreeBreakfast } from 'react-icons/md';
 
 const statusOptions = [
@@ -7,6 +7,7 @@ const statusOptions = [
   { label: 'At Work', icon: <FiBriefcase className="text-amber-700 text-base" /> },
   { label: 'Studying', icon: <FiBookOpen className="text-rose-700 text-base" /> },
   { label: 'Sleeping', icon: <FiMoon className="text-indigo-700 text-base" /> },
+  { label: 'Busy', icon: <FiLock className="text-stone-700 text-base" /> },
 ];
 
 const DAYS = [
