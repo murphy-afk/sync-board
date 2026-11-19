@@ -2,8 +2,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
-// Backend target for the dev proxy. Override when the API runs elsewhere,
-// e.g. `VITE_BACKEND_URL=http://server:5000 npm run dev`.
+// Dev proxy target; override with VITE_BACKEND_URL if the API runs elsewhere
 const backendTarget = process.env.VITE_BACKEND_URL ?? 'http://localhost:5000'
 
 // https://vite.dev/config/

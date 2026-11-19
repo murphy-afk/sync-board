@@ -40,7 +40,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempBoardName, setTempBoardName] = useState('Sync Board');
 
-  // Keep the local copy (and localStorage) in sync whenever the user changes
+  // Keep the local copy (and localStorage) in sync with user updates
   const updateUser = (updates) => {
     setUser(prev => {
       const next = { ...prev, ...updates };

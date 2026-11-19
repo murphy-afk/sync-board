@@ -88,8 +88,8 @@ export default function PixelCanvas({ boardId }) {
     }
   };
 
-  // Flood fill: paints the contiguous area of the clicked colour, stopping at any
-  // pixel of a different colour, so a region enclosed by other colours fills exactly.
+  // Flood fill: replaces the contiguous area of the clicked colour, stopping at
+  // any pixel of a different colour.
   const fillArea = (startIndex, fillColor) => {
     const targetColor = grid[startIndex];
     if (targetColor === fillColor) return;

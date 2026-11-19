@@ -5,13 +5,13 @@ const path = require('path');
 const fs = require('fs');
 const pool = require('../db');
 
-// Ensure uploads directory exists
+// Create the uploads dir if it's missing
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure Multer for secure storage
+// Multer storage: random filename, original extension kept
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -32,7 +32,7 @@ const upload = multer({
   }
 });
 
-// Serve uploaded files statically so the frontend can display them securely
+// Serve uploaded files statically
 // app.use('/uploads', express.static(uploadDir));
 
 // Get all photos for a board
