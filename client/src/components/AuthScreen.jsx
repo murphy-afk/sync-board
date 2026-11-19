@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { FiHeart, FiUser, FiLock, FiKey, FiArrowRight } from 'react-icons/fi';
+import { FiHeart, FiUser, FiLock, FiKey, FiMail, FiArrowRight } from 'react-icons/fi';
 
 export default function AuthScreen({ onLoginSuccess }) {
   const [isRegistering, setIsRegistering] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [inviteCode, setInviteCode] = useState('');
-  const [mode, setMode] = useState('auth'); // 'auth' or 'join'
+  const [mode, setMode] = useState(() => (new URLSearchParams(window.location.search).get('token') ? 'reset' : 'auth')); // 'auth', 'options', 'join', 'forgot', 'reset'
+  const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get('token'));
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [tempUserData, setTempUserData] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setNotice('');
 
     const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
 
@@ -20,7 +26,7 @@ export default function AuthScreen({ onLoginSuccess }) {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(isRegistering ? { username, password, email } : { username, password })
       });
       const data = await res.json();
 
@@ -33,6 +39,59 @@ export default function AuthScreen({ onLoginSuccess }) {
       } else {
         onLoginSuccess(data);
       }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Could not send the reset link');
+
+      setNotice(data.message);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+
+    if (newPassword !== confirmPassword) {
+      setError("Those passwords don't match");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, password: newPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Could not reset the password');
+
+      setResetToken(null);
+      window.history.replaceState({}, '', window.location.pathname);
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsRegistering(false);
+      setMode('auth');
+      setNotice('Password updated. You can log in now.');
     } catch (err) {
       setError(err.message);
     }
@@ -55,6 +114,7 @@ export default function AuthScreen({ onLoginSuccess }) {
       onLoginSuccess({
         userId: tempUserData.userId,
         username: tempUserData.username,
+        email: tempUserData.email,
         boardId: data.boardId,
         inviteCode: inviteCode.trim().toUpperCase()
       });
@@ -67,6 +127,27 @@ export default function AuthScreen({ onLoginSuccess }) {
     onLoginSuccess(tempUserData);
   };
 
+  const goToLogin = () => {
+    if (resetToken) {
+      setResetToken(null);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    setMode('auth');
+    setError('');
+    setNotice('');
+  };
+
+  let subtitle;
+  if (mode === 'options') {
+    subtitle = 'Your board is ready! Do you want to join your partner\'s board?';
+  } else if (mode === 'forgot') {
+    subtitle = 'Pop in your email and we will send you a link to reset your password';
+  } else if (mode === 'reset') {
+    subtitle = 'Pick a new password for your account';
+  } else {
+    subtitle = isRegistering ? 'Create an account to get started' : 'Welcome back! Log in to your board';
+  }
+
   return (
     <div className="min-h-screen bg-[#fdc3ee] flex items-center justify-center p-6 font-sans">
       <div className="max-w-md w-full bg-[#FAF7F2] p-8 rounded-4xl border border-stone-200/60 shadow-xl flex flex-col items-center">
@@ -74,11 +155,7 @@ export default function AuthScreen({ onLoginSuccess }) {
           <FiHeart className="text-xl fill-current" />
         </div>
         <h1 className="text-3xl font-light tracking-tight text-stone-800 mb-2">Sync Board</h1>
-        <p className="text-stone-500 text-sm mb-6 text-center">
-          {mode === 'options'
-            ? 'Your board is ready! Do you want to join your partner\'s board?'
-            : isRegistering ? 'Create an account to get started' : 'Welcome back! Log in to your board'}
-        </p>
+        <p className="text-stone-500 text-sm mb-6 text-center">{subtitle}</p>
 
         {error && (
           <div className="w-full bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl mb-4 text-center">
@@ -86,8 +163,27 @@ export default function AuthScreen({ onLoginSuccess }) {
           </div>
         )}
 
+        {notice && (
+          <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs p-3 rounded-xl mb-4 text-center">
+            {notice}
+          </div>
+        )}
+
         {mode === 'auth' ? (
           <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+            {isRegistering && (
+              <div className="relative">
+                <FiMail className="absolute left-4 top-3.5 text-stone-400" />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                  required/>
+              </div>
+            )}
+
             <div className="relative">
               <FiUser className="absolute left-4 top-3.5 text-stone-400" />
               <input
@@ -110,6 +206,17 @@ export default function AuthScreen({ onLoginSuccess }) {
                 required/>
             </div>
 
+            {!isRegistering && (
+              <div className="text-right -mt-2">
+                <button
+                  type="button"
+                  onClick={() => { setMode('forgot'); setError(''); setNotice(''); }}
+                  className="text-xs text-stone-400 hover:text-stone-700 transition cursor-pointer">
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
             <button type="submit" className="w-full mt-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium transition cursor-pointer">
               {isRegistering ? 'Create Account' : 'Log In'} <FiArrowRight />
             </button>
@@ -117,11 +224,70 @@ export default function AuthScreen({ onLoginSuccess }) {
             <div className="text-center mt-4">
               <button
                 type="button"
-                onClick={() => setIsRegistering(!isRegistering)}
+                onClick={() => { setIsRegistering(!isRegistering); setError(''); setNotice(''); }}
                 className="text-xs text-stone-500 hover:text-stone-800 transition cursor-pointer">
                 {isRegistering ? 'Already have an account? Log in' : "Don't have an account? Register"}
               </button>
             </div>
+          </form>
+        ) : mode === 'forgot' ? (
+          <form onSubmit={handleForgotPassword} className="w-full flex flex-col gap-4">
+            <div className="relative">
+              <FiMail className="absolute left-4 top-3.5 text-stone-400" />
+              <input
+                type="email"
+                placeholder="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                required/>
+            </div>
+
+            <button type="submit" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium transition cursor-pointer">
+              Send reset link <FiArrowRight />
+            </button>
+
+            <button
+              type="button"
+              onClick={goToLogin}
+              className="text-xs text-stone-500 hover:text-stone-800 transition text-center cursor-pointer mt-2">
+              Back to log in
+            </button>
+          </form>
+        ) : mode === 'reset' ? (
+          <form onSubmit={handleResetPassword} className="w-full flex flex-col gap-4">
+            <div className="relative">
+              <FiLock className="absolute left-4 top-3.5 text-stone-400" />
+              <input
+                type="password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                required/>
+            </div>
+
+            <div className="relative">
+              <FiKey className="absolute left-4 top-3.5 text-stone-400" />
+              <input
+                type="password"
+                placeholder="Repeat the new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-white border border-stone-200 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                required/>
+            </div>
+
+            <button type="submit" className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium transition cursor-pointer">
+              Set new password <FiArrowRight />
+            </button>
+
+            <button
+              type="button"
+              onClick={goToLogin}
+              className="text-xs text-stone-500 hover:text-stone-800 transition text-center cursor-pointer mt-2">
+              Back to log in
+            </button>
           </form>
         ) : mode === 'options' ? (
           <div className="w-full flex flex-col gap-3">

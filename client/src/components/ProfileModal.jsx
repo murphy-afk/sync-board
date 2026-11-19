@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiX, FiUser, FiGlobe, FiClock, FiCopy, FiCheck } from 'react-icons/fi';
+import { FiX, FiUser, FiMail, FiGlobe, FiClock, FiCopy, FiCheck } from 'react-icons/fi';
 
 
 const TIMEZONES = [
@@ -19,8 +19,10 @@ const TIMEZONES = [
 export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose }) {
   const [nickname, setNickname] = useState(user?.nickname || user?.username || '');
   const [timezone, setTimezone] = useState(user?.timezone || 'UTC');
+  const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
@@ -37,19 +39,20 @@ export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const res = await window.fetch(`/api/users/${user.userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, timezone })
+        body: JSON.stringify({ nickname, timezone, email })
       });
       const data = await res.json();
-      if (data.success) {
-        onSave({ nickname, timezone });
-        onClose();
-      }
+      if (!res.ok || !data.success) throw new Error(data.error || 'Could not save your profile');
+      onSave({ nickname, timezone, email });
+      onClose();
     } catch (err) {
       console.error('Failed to update profile:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -88,6 +91,20 @@ export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose
           </div>
 
           <div>
+            <label className="text-xs font-medium text-stone-600 uppercase tracking-wider block mb-2">Your Email</label>
+            <div className="relative flex items-center">
+              <FiMail className="absolute left-4 text-stone-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email..."
+                className="w-full bg-white border border-stone-200 rounded-2xl pl-11 pr-4 py-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
+            </div>
+            <p className="text-[11px] text-stone-400 mt-1 ml-1">Used to recover your password if you forget it.</p>
+          </div>
+
+          <div>
             <label className="text-xs font-medium text-stone-600 uppercase tracking-wider block mb-2">Your Timezone / Location</label>
             <div className="relative flex items-center">
               <FiGlobe className="absolute left-4 text-stone-400" />
@@ -118,6 +135,12 @@ export default function ProfileModal({ isOpen, user, inviteCode, onSave, onClose
                 </button>
               </div>
               <p className="text-[11px] text-stone-400 mt-1 ml-1">Share this code so your partner can join your board.</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl text-center">
+              {error}
             </div>
           )}
 

@@ -30,15 +30,19 @@ Also in settings: nickname, timezone, colour theme, and logout. A new account st
 - `server/` — Express on Node, `mysql2` for the database, `multer` for uploads.
 - `db.sql` is a local MySQL dump and is gitignored, so the schema is not in this repo.
 
-REST endpoints live under `/api` — `auth`, `boards`, `users`, `doodles`, `messages`, `routines`, `gallery`. Uploaded photos are written to `server/uploads/` and served back from `/uploads`.
+REST endpoints live under `/api` — `auth` (register, login, forgot-password, reset-password), `boards`, `users`, `doodles`, `messages`, `routines`, `gallery`. Uploaded photos are written to `server/uploads/` and served back from `/uploads`.
 
 Nothing uses websockets. The dashboard re-fetches board members every 5 seconds and each tab loads its own content when you open it, which is enough for two people.
 
-Passwords are hashed with bcrypt. Login state lives in `localStorage`, so treat it as a convenience rather than real sessions.
+Every account has an email: required at sign-up, unique, and the way back in if you forget your password. Accounts made before emails existed can't get past the login screen until they add one. Reset links are single-use, expire after an hour, and are stored as hashes so a leaked database doesn't hand anyone an account. Passwords are hashed with bcrypt, and login state lives in `localStorage`, so treat it as a convenience rather than real sessions.
 
 ## Running it
 
-You need MySQL with the `sync_board` schema loaded.
+You need MySQL with the `sync_board` schema loaded. If the database already exists, run the one-off migration instead — it adds the `email` column and the `password_resets` table:
+
+```sh
+mysql -u <user> -p sync_board < migrations.sql
+```
 
 ### Development
 
@@ -56,7 +60,7 @@ npm run dev
 
 The Vite dev server proxies `/api` and `/uploads` to `localhost:5000`. Set `VITE_BACKEND_URL` if the API is somewhere else.
 
-`server/.env` wants `PORT`, `DB_HOST`, `DB_USER`, `DB_PASSWORD` and `DB_NAME`.
+`server/.env` wants `PORT`, `DB_HOST`, `DB_USER`, `DB_PASSWORD` and `DB_NAME`. `CLIENT_URL` is optional and decides where reset links point — it defaults to `http://localhost:5173`.
 
 ### Docker
 
@@ -85,13 +89,16 @@ sync-board/
 ├── server/
 │   ├── routes/            auth, boards, users, doodles, notes, routines, gallery
 │   ├── uploads/           photos land here
+│   ├── validate.js        email checks, shared by the routes
 │   └── db.js              mysql2 pool
+├── migrations.sql         one-off schema changes for existing databases
 ├── compose.yml
 └── db.sql                 local dump, not committed
 ```
 
 ## Not finished yet
 
+- Nothing emails you yet — password reset links are printed to the server console until a mailer is wired up
 - The partner's card always reads "Sleeping" — statuses don't sync between the two sides yet
 - "Delete account" in settings is a stub and only shows an alert
 

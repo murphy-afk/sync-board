@@ -11,6 +11,7 @@ import TimeCard from './TimeCard';
 import ProfileModal from './ProfileModal';
 import RoutineScheduler from './RoutineScheduler';
 import PhotoGallery from './PhotoGallery';
+import EmailPrompt from './EmailPrompt';
 import CreateBoardScreen from './CreateBoardScreen';
 
 dayjs.extend(utc);
@@ -37,6 +38,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRoutinesOpen, setIsRoutinesOpen] = useState(false);
   const [boardName, setBoardName] = useState('Sync Board');
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempBoardName, setTempBoardName] = useState('Sync Board');
 
@@ -81,11 +83,14 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     return () => clearInterval(interval);
   }, [user?.boardId, user?.userId, user?.id]);
 
-  // Fetch latest user info on mount to persist nickname/timezone across reloads
+  // Fetch latest user info on mount to persist nickname/timezone/email across reloads
   useEffect(() => {
     const fetchUserData = async () => {
       const currentUserId = user?.userId || user?.id;
-      if (!currentUserId) return;
+      if (!currentUserId) {
+        setProfileLoaded(true);
+        return;
+      }
       try {
         const res = await fetch(`/api/users/${currentUserId}`);
         const data = await res.json();
@@ -94,6 +99,8 @@ export default function Dashboard({ user: initialUser, onLogout }) {
         }
       } catch (err) {
         console.error('Failed to fetch latest user profile:', err);
+      } finally {
+        setProfileLoaded(true);
       }
     };
     fetchUserData();
@@ -219,6 +226,14 @@ export default function Dashboard({ user: initialUser, onLogout }) {
 
   const currentStatusObj = statusOptions.find(s => s.label === myStatus) || statusOptions[0];
   const partnerStatusObj = statusOptions.find(s => s.label === partnerStatus) || statusOptions[3];
+
+  // Wait for the profile fetch so we don't nag anyone who already has an email
+  if (!profileLoaded) return null;
+
+  // Accounts from before emails existed don't get in until they add one
+  if (!user?.email) {
+    return <EmailPrompt user={user} onSave={updateUser} onLogout={onLogout} />;
+  }
 
   // No board access (left a board, or logged in without one): create a new one
   if (!user?.boardId) {
